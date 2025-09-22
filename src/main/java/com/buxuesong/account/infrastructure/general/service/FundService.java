@@ -34,15 +34,14 @@ public class FundService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // 配置参数，从环境变量中读取
-    @Value("${TENCENT_CLOUD_ENV_ID:spring-3go98zd4f98e1fb9}")
+    @Value("${TENCENT_CLOUD_ENV_ID:}")
     private String envId;
-
-    @Value("${TENCENT_CLOUD_FUND_FUNCTION_NAME:getAllUserFunds}")
-    private String functionName;
 
     @Value("${TENCENT_CLOUD_TOKEN:}")
     private String token;
+
+    @Value("${TENCENT_CLOUD_FUND_FUNCTION_NAME:getAllUserFunds}")
+    private String functionName;
 
     /**
      * 获取用户基金列表
@@ -51,6 +50,9 @@ public class FundService {
      * @return 基金列表
      */
     public List<FundInfo> getUserFundList(String openId) {
+        logger.info("=== FundService.getUserFundList 方法开始执行 ===");
+        logger.info("传入参数 openId: {}", openId);
+
         try {
             // 构建请求参数
             Map<String, Object> payload = new HashMap<>();
@@ -94,6 +96,8 @@ public class FundService {
         } catch (Exception e) {
             logger.error("获取基金列表失败", e);
             return new ArrayList<>();
+        } finally {
+            logger.info("=== FundService.getUserFundList 方法执行结束 ===");
         }
     }
 

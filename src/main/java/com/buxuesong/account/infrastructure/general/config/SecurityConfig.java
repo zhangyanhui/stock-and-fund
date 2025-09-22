@@ -74,7 +74,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             // 和 Controller 中的 @PreAuthorize("hasAuthority('ADMIN')")注解配置效果一样
             // 这两种方式用哪一种都可以
             .authorizeHttpRequests((authorize) -> authorize
-                .requestMatchers("/login", "/chrome/**", "/login.html").permitAll()
+                .requestMatchers("/login", "/chrome/**", "/login.html", "/test/**", "/api/test/**").permitAll()
                 .anyRequest().hasAuthority(ACCOUNT_CLIENT_AUTHORITY))
             .formLogin((formLogin) -> formLogin.loginPage("/login.html").loginProcessingUrl("/login").defaultSuccessUrl("/main.html", true))
             .logout(withDefaults())

@@ -1,5 +1,7 @@
 package com.buxuesong.account.infrastructure.general.controller;
 
+import com.buxuesong.account.apis.model.response.Response;
+import com.buxuesong.account.domain.model.fund.FundEntity;
 import com.buxuesong.account.infrastructure.general.entity.FundInfo;
 import com.buxuesong.account.infrastructure.general.service.FundService;
 import com.buxuesong.account.infrastructure.persistent.po.FundPO;
@@ -22,6 +24,8 @@ public class FundListController {
 
     @Autowired
     private FundService fundService;
+    @Autowired
+    private FundEntity fundEntity;
 
     /**
      * 基金列表页面
@@ -36,23 +40,23 @@ public class FundListController {
      */
     @GetMapping("/api/list")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getFundList(@RequestParam(required = false) String openId) {
+    public Response getFundList(@RequestParam(required = false) String openId) {
         try {
-            List<FundPO> fundList = fundService.getUserFundListAsPO(openId);
-            Map<String, Object> statistics = fundService.getFundStatistics(openId);
+            List<String> fundList = fundService.getUserFundListAsPO(openId);
+//            Map<String, Object> statistics = fundService.getFundStatistics(openId);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", fundList);
-            response.put("total", fundList.size());
-            response.put("statistics", statistics);
+//            Map<String, Object> response = new HashMap<>();
+//            response.put("success", true);
+//            response.put("data", fundList);
+//            response.put("total", fundList.size());
+//            response.put("statistics", statistics);
 
-            return ResponseEntity.ok(response);
+            return Response.builder().code("00000000").value(fundEntity.getFundDetails(fundList)).build();
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "获取基金列表失败: " + e.getMessage());
-            return ResponseEntity.ok(errorResponse);
+            return Response.builder().build();
         }
     }
 
@@ -63,7 +67,7 @@ public class FundListController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getAllFundList() {
         try {
-            List<FundPO> fundList = fundService.getAllFundListAsPO();
+            List<String> fundList = fundService.getAllFundListAsPO();
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

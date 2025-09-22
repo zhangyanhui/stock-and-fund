@@ -110,14 +110,14 @@ function getTableHtml(result){
         str += "<tr><td class='no-wrap'>"
             + "<a href='#' onclick=\"filterApp('" + result[k].app + "')\">" + getAppName(result[k].app) + "</a>"
             + "</td><td class='no-wrap' onclick=\"getFundHistory('" + result[k].fundCode + "')\">" + result[k].fundName
-            + "</td><td " + dayIncomeStyle + ">" +result[k].gszzl + "%"
-            + "</td><td " + dayIncomeStyle + ">" + dayIncome
-            + "</td><td>" + result[k].dwjz + "(" + result[k].jzrq + ")"
-            + "</td><td>" + result[k].gsz
-            + "</td><td " + oneYearAgoUpperStyle + ">" + result[k].oneYearAgoUpper + "%"
-            + "</td><td " + oneSeasonAgoUpperStyle + ">" + result[k].oneSeasonAgoUpper + "%"
-            + "</td><td " + oneMonthAgoUpperStyle + ">" + result[k].oneMonthAgoUpper + "%"
-            + "</td><td " + oneWeekAgoUpperStyle + ">" + result[k].oneWeekAgoUpper + "%"
+            // + "</td><td " + dayIncomeStyle + ">" +result[k].gszzl + "%"
+//            + "</td><td " + dayIncomeStyle + ">" + dayIncome
+//            + "</td><td>" + result[k].dwjz + "(" + result[k].jzrq + ")"
+//            + "</td><td>" + result[k].gsz
+//            + "</td><td " + oneYearAgoUpperStyle + ">" + result[k].oneYearAgoUpper + "%"
+//            + "</td><td " + oneSeasonAgoUpperStyle + ">" + result[k].oneSeasonAgoUpper + "%"
+//            + "</td><td " + oneMonthAgoUpperStyle + ">" + result[k].oneMonthAgoUpper + "%"
+//            + "</td><td " + oneWeekAgoUpperStyle + ">" + result[k].oneWeekAgoUpper + "%"
             + "</td><td>" + result[k].costPrise
             + "</td><td>" + result[k].bonds
             + "</td><td>" + marketValue
@@ -208,8 +208,6 @@ function updateFund(code, costPrise, bonds, app, name){
     $("#bonds").val(bonds);
     $("#app").val(app);
     $("#myModal").modal();
-
-    // window.open ('/updateStockAndFund.html?code='+code+'&type=fund', 'newwindow', 'height='+iHeight+', width='+iWidth+', top='+iTop+', left='+iLeft+', toolbar=no, menubar=no, scrollbars=no, resizable=no,location=no, status=no');
 }
 
 function submitStockAndFund(){

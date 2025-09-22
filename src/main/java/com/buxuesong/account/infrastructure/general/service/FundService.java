@@ -34,14 +34,14 @@ public class FundService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // 配置参数，可以在application.properties中配置
-    @Value("${tencent.cloud.envId:spring-3go98zd4f98e1fb9}")
+    // 配置参数，从环境变量中读取
+    @Value("${TENCENT_CLOUD_ENV_ID:spring-3go98zd4f98e1fb9}")
     private String envId;
 
-    @Value("${tencent.cloud.fund.functionName:getAllUserFunds}")
+    @Value("${TENCENT_CLOUD_FUND_FUNCTION_NAME:getAllUserFunds}")
     private String functionName;
 
-    @Value("${tencent.cloud.token:eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJhdWQiOiJzcHJpbmctM2dvOTh6ZDRmOThlMWZiOSIsImV4cCI6MjUzNDAyMzAwNzk5LCJpYXQiOjE3NTgyNDgwMTEsImF0X2hhc2giOiJQTnhnMXBULUVmQ083VkpVQU5namh3IiwicHJvamVjdF9pZCI6InNwcmluZy0zZ285OHpkNGY5OGUxZmI5IiwibWV0YSI6eyJwbGF0Zm9ybSI6IndlYiIsImVudiI6InNwcmluZy0zZ285OHpkNGY5OGUxZmI5IiwiZW52X2lkIjoic3ByaW5nLTNnbzk4emQ0Zjk4ZTFmYjkifX0.}")
+    @Value("${TENCENT_CLOUD_TOKEN:}")
     private String token;
 
     /**

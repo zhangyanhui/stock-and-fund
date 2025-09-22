@@ -29,7 +29,7 @@ public class FundInfo {
     private BigDecimal holdingProfit;
 
     @JsonProperty("fundCount")
-    private BigDecimal fundCount;
+    private int fundCount;
 
     @JsonProperty("todayAmt")
     private BigDecimal todayAmt;
@@ -105,11 +105,11 @@ public class FundInfo {
         this.holdingProfit = holdingProfit;
     }
 
-    public BigDecimal getFundCount() {
+    public int getFundCount() {
         return fundCount;
     }
 
-    public void setFundCount(BigDecimal fundCount) {
+    public void setFundCount(int fundCount) {
         this.fundCount = fundCount;
     }
 

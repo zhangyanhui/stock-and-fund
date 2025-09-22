@@ -42,6 +42,8 @@
                 <div class="modal-body">
                         <form class="am-form" id="saveOutComeForm">
                             <input type="hidden" id="type" th:value="fund"/>
+                            
+                            <!-- 基础信息 -->
                             <div class="am-form-group am-cf">
                                 <div class="zuo">基金名称：</div>
                                 <div class="you">
@@ -57,19 +59,100 @@
                             <div class="am-form-group am-cf">
                                 <div class="zuo">持仓成本：</div>
                                 <div class="you">
-                                    <input type="number" class="am-input-sm" id="costPrise" placeholder="请输入持仓成本">
+                                    <input type="number" step="0.01" class="am-input-sm" id="costPrise" placeholder="请输入持仓成本">
                                 </div>
                             </div>
                             <div class="am-form-group am-cf">
                                 <div class="zuo">持有份额：</div>
                                 <div class="you">
-                                    <input type="number" class="am-input-sm" id="bonds" placeholder="请输入持有份额">
+                                    <input type="number" step="0.01" class="am-input-sm" id="bonds" placeholder="请输入持有份额">
                                 </div>
                             </div>
                             <div class="am-form-group am-cf">
                                 <div class="zuo">APP：</div>
                                 <div class="you">
                                     <select data-am-selected="{btnSize: 'sm'}" id="app">
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- 净值相关字段 -->
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">净值日期：</div>
+                                <div class="you">
+                                    <input type="text" class="am-input-sm" id="jzrq" placeholder="净值日期（如：2024-01-01）">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">当日净值：</div>
+                                <div class="you">
+                                    <input type="number" step="0.0001" class="am-input-sm" id="dwjz" placeholder="当日净值">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">估算净值：</div>
+                                <div class="you">
+                                    <input type="number" step="0.0001" class="am-input-sm" id="gsz" placeholder="估算净值">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">估算涨跌幅(%)：</div>
+                                <div class="you">
+                                    <input type="number" step="0.01" class="am-input-sm" id="gszzl" placeholder="估算涨跌百分比">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">估值时间：</div>
+                                <div class="you">
+                                    <input type="text" class="am-input-sm" id="gztime" placeholder="估值时间">
+                                </div>
+                            </div>
+                            
+                            <!-- 历史涨跌幅字段 -->
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">近一年涨跌幅(%)：</div>
+                                <div class="you">
+                                    <input type="number" step="0.01" class="am-input-sm" id="oneYearAgoUpper" placeholder="近一年涨跌幅">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">近一季度涨跌幅(%)：</div>
+                                <div class="you">
+                                    <input type="number" step="0.01" class="am-input-sm" id="oneSeasonAgoUpper" placeholder="近一季度涨跌幅">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">近一月涨跌幅(%)：</div>
+                                <div class="you">
+                                    <input type="number" step="0.01" class="am-input-sm" id="oneMonthAgoUpper" placeholder="近一月涨跌幅">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">近一周涨跌幅(%)：</div>
+                                <div class="you">
+                                    <input type="number" step="0.01" class="am-input-sm" id="oneWeekAgoUpper" placeholder="近一周涨跌幅">
+                                </div>
+                            </div>
+                            
+                            <!-- 其他字段 -->
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">当日净值（实际）：</div>
+                                <div class="you">
+                                    <input type="number" step="0.0001" class="am-input-sm" id="currentDayJingzhi" placeholder="当日净值（交易日晚9点后更新）">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">前一日净值：</div>
+                                <div class="you">
+                                    <input type="number" step="0.0001" class="am-input-sm" id="previousDayJingzhi" placeholder="前一日净值">
+                                </div>
+                            </div>
+                            <div class="am-form-group am-cf">
+                                <div class="zuo">是否隐藏：</div>
+                                <div class="you">
+                                    <select class="am-input-sm" id="hide">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
                                     </select>
                                 </div>
                             </div>
@@ -187,7 +270,7 @@
                         <!--<th class="table-id">ID</th>-->
                         <th class="table-author am-hide-sm-only">用户id</th>
                         <th class="table-type">基金名称</th>
-                        <th class="table-author am-hide-sm-only">估算涨跌幅</th>
+<!--                        <th class="table-author am-hide-sm-only">估算涨跌幅</th>-->
 <!--                        <th class="table-author am-hide-sm-only">估算当日盈利</th>-->
 <!--                        <th class="table-author am-hide-sm-only">当日净值</th>-->
 <!--                        <th class="table-author am-hide-sm-only">估算净值</th>-->

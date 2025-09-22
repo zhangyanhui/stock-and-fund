@@ -35,7 +35,7 @@ function getData() {
 
 function initData() {
     $.ajax({
-        url:"/fund",
+        url:"/fund/api/list",
         type:"get",
         data :{
         },

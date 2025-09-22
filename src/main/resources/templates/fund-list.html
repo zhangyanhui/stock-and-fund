@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基金列表 - 股票基金神器</title>
+    <link rel="stylesheet" href="/css/main.admin.css" type="text/css" media="all"/>
+    <link rel="stylesheet" href="/css/main.amazeui.min.css" type="text/css" media="all"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css" media="all"/>
+    <style>
+        .fund-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .fund-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .fund-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .fund-code {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .fund-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .fund-profit {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .profit-positive {
+            color: #e74c3c;
+        }
+        .profit-negative {
+            color: #27ae60;
+        }
+        .fund-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .detail-item {
+            text-align: center;
+        }
+        .detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+        .statistics-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .stat-item {
+            display: inline-block;
+            margin: 0 30px;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #e74c3c;
+        }
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .filter-input {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .btn-refresh {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-refresh:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="header :: header"></div>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <div th:replace="sidebar :: sidebar"></div>
+            
+            <div class="col-md-10 col-sm-11 main">
+                <div class="page-header">
+                    <h1>基金列表</h1>
+                </div>
+                
+                <!-- 统计信息卡片 -->
+                <div class="statistics-card" id="statisticsCard" style="display: none;">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalCount">0</span>
+                        <div class="stat-label">持有基金数</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalAmt">¥0.00</span>
+                        <div class="stat-label">总资产</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalProfit">¥0.00</span>
+                        <div class="stat-label">总收益</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="profitRate">0.00%</span>
+                        <div class="stat-label">收益率</div>
+                    </div>
+                </div>
+                
+                <!-- 筛选栏 -->
+                <div class="filter-bar">
+                    <input type="text" class="filter-input" id="searchInput" placeholder="搜索基金名称或代码...">
+                    <input type="text" class="filter-input" id="openIdInput" placeholder="输入OpenID筛选用户...">
+                    <button class="btn-refresh" onclick="loadFundList()">刷新数据</button>
+                    <button class="btn-refresh" onclick="loadAllFunds()" style="background: #27ae60;">显示所有</button>
+                </div>
+                
+                <!-- 加载状态 -->
+                <div class="loading" id="loadingDiv">
+                    <i class="fa fa-spinner fa-spin"></i> 正在加载基金数据...
+                </div>
+                
+                <!-- 错误信息 -->
+                <div class="error" id="errorDiv" style="display: none;">
+                    <i class="fa fa-exclamation-triangle"></i> <span id="errorMessage"></span>
+                </div>
+                
+                <!-- 基金列表 -->
+                <div id="fundListContainer">
+                    <!-- 基金卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script>
+        let allFunds = [];
+        let currentOpenId = '';
+        
+        // 页面加载完成后获取基金数据
+        $(document).ready(function() {
+            loadFundList();
+            
+            // 搜索功能
+            $('#searchInput').on('input', function() {
+                filterFunds();
+            });
+            
+            // OpenID筛选
+            $('#openIdInput').on('input', function() {
+                currentOpenId = $(this).val().trim();
+                loadFundList();
+            });
+        });
+        
+        // 加载基金列表
+        function loadFundList() {
+            showLoading();
+            
+            let url = '/fund/api/list';
+            if (currentOpenId) {
+                url += '?openId=' + encodeURIComponent(currentOpenId);
+            }
+            
+            $.ajax({
+                url: url,
+                method: 'GET',
+                success: function(response) {
+                    hideLoading();
+                    if (response.success) {
+                        allFunds = response.data || [];
+                        displayFunds(allFunds);
+                        displayStatistics(response.statistics);
+                    } else {
+                        showError(response.message || '获取基金数据失败');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    hideLoading();
+                    showError('网络请求失败: ' + error);
+                }
+            });
+        }
+        
+        // 加载所有基金
+        function loadAllFunds() {
+            showLoading();
+            currentOpenId = '';
+            $('#openIdInput').val('');
+            
+            $.ajax({
+                url: '/fund/api/all',
+                method: 'GET',
+                success: function(response) {
+                    hideLoading();
+                    if (response.success) {
+                        allFunds = response.data || [];
+                        displayFunds(allFunds);
+                        $('#statisticsCard').hide();
+                    } else {
+                        showError(response.message || '获取基金数据失败');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    hideLoading();
+                    showError('网络请求失败: ' + error);
+                }
+            });
+        }
+        
+        // 显示基金列表
+        function displayFunds(funds) {
+            const container = $('#fundListContainer');
+            container.empty();
+            
+            if (funds.length === 0) {
+                container.html('<div class="text-center" style="padding: 50px; color: #666;"><i class="fa fa-inbox"></i><br>暂无基金数据</div>');
+                return;
+            }
+            
+            funds.forEach(function(fund) {
+                const profitClass = fund.holdingProfit >= 0 ? 'profit-positive' : 'profit-negative';
+                const profitSign = fund.holdingProfit >= 0 ? '+' : '';
+                const profitRate = fund.fundAmt > 0 ? ((fund.holdingProfit / (fund.fundAmt - fund.holdingProfit)) * 100).toFixed(2) : '0.00';
+                
+                const cardHtml = `
+                    <div class="fund-card">
+                        <div class="fund-name">${fund.fundName || '未知基金'}</div>
+                        <div class="fund-code">代码: ${fund.fundCode || 'N/A'}</div>
+                        <div class="fund-amount">¥${(fund.fundAmt || 0).toFixed(2)}</div>
+                        <div class="fund-profit ${profitClass}">
+                            ${profitSign}¥${(fund.holdingProfit || 0).toFixed(2)} (${profitSign}${profitRate}%)
+                        </div>
+                        <div class="fund-details">
+                            <div class="detail-item">
+                                <div class="detail-label">持有份额</div>
+                                <div class="detail-value">${(fund.fundCount || 0).toFixed(2)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">单位净值</div>
+                                <div class="detail-value">¥${(fund.unitNetValue || 0).toFixed(4)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">成本价</div>
+                                <div class="detail-value">¥${(fund.fundCost || 0).toFixed(4)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">导入日期</div>
+                                <div class="detail-value">${fund.importDate || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.append(cardHtml);
+            });
+        }
+        
+        // 显示统计信息
+        function displayStatistics(stats) {
+            if (stats) {
+                $('#totalCount').text(stats.totalCount || 0);
+                $('#totalAmt').text('¥' + (stats.totalAmt || 0).toFixed(2));
+                $('#totalProfit').text((stats.totalProfit >= 0 ? '+' : '') + '¥' + (stats.totalProfit || 0).toFixed(2));
+                $('#profitRate').text((stats.totalProfit >= 0 ? '+' : '') + (stats.profitRate || 0).toFixed(2) + '%');
+                $('#statisticsCard').show();
+            } else {
+                $('#statisticsCard').hide();
+            }
+        }
+        
+        // 筛选基金
+        function filterFunds() {
+            const searchTerm = $('#searchInput').val().toLowerCase().trim();
+            if (!searchTerm) {
+                displayFunds(allFunds);
+                return;
+            }
+            
+            const filteredFunds = allFunds.filter(function(fund) {
+                return (fund.fundName && fund.fundName.toLowerCase().includes(searchTerm)) ||
+                       (fund.fundCode && fund.fundCode.toLowerCase().includes(searchTerm));
+            });
+            
+            displayFunds(filteredFunds);
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            $('#loadingDiv').show();
+            $('#errorDiv').hide();
+            $('#fundListContainer').empty();
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            $('#loadingDiv').hide();
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            $('#errorMessage').text(message);
+            $('#errorDiv').show();
+            $('#fundListContainer').empty();
+        }
+    </script>
+</body>
+</html>

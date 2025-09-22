@@ -5,6 +5,7 @@ import com.buxuesong.account.apis.model.response.Response;
 import com.buxuesong.account.domain.model.fund.FundEntity;
 import com.buxuesong.account.apis.model.response.StockAndFundBean;
 import com.buxuesong.account.domain.model.stock.StockEntity;
+import com.buxuesong.account.infrastructure.general.util.HttpClientUtil;
 import com.buxuesong.account.infrastructure.persistent.po.FundHisPO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,5 +126,13 @@ public class FundController {
             .collect(Collectors.toList());
         stockAndFundsFromStocks.addAll(stockAndFundsFromFunds);
         return Response.builder().code("00000000").value(stockAndFundsFromStocks).build();
+    }
+
+    public static void main(String[] args) {
+// 使用示例
+        String result = HttpClientUtil.callTencentCloudFunction("spring-3go98zd4f98e1fb9", "getAllUserFunds",
+            "eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJhdWQiOiJzcHJpbmctM2dvOTh6ZDRmOThlMWZiOSIsImV4cCI6MjUzNDAyMzAwNzk5LCJpYXQiOjE3NTgyNDgwMTEsImF0X2hhc2giOiJQTnhnMXBULUVmQ083VkpVQU5namh3IiwicHJvamVjdF9pZCI6InNwcmluZy0zZ285OHpkNGY5OGUxZmI5IiwibWV0YSI6eyJwbGF0Zm9ybSI6IkFwaUtleSJ9LCJhZG1pbmlzdHJhdG9yX2lkIjoiMTg2OTY0ODE0MTQyOTU0NzAxMCIsInVzZXJfdHlwZSI6IiJ9.i3hPKdGKc2rwjzr97q3Z3pvqlYZDmhdE3vX-VWtbFEaK1o928AOfYrhMkibb1XsPTr0MjXHM2cMJgJlNdfFmj8pARk2yNfGTpmsuWQ2KQl4EnrPaIusI1H7L3tMrPf8HZZOEtkyzdu1YQyB20StqQrD59mWujgDEKIavV14SS-11MYkKoiCAAfXJlJyXm9Rb3V7J4iotC7TKCY2xcgCbpKj4dBjDS75N_u07ekHDx_aDl9GkJegnIJG-R-fPR2VxZvxaW5dBmbEdw5ihDbY0lwXETuXDJnFLvNhhVZxeS9JYvWzLWEaXdngu8ybQ0M2SIyZ75ZBTgAps6t37kMZ4UA");
+        System.out.println(result);
+
     }
 }

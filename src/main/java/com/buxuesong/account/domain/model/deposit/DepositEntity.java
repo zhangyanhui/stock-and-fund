@@ -78,9 +78,9 @@ public class DepositEntity {
     public void depositAllUsers() {
         List<UserPO> users = userMapper.findAllUsers();
         // JAVA 旧版本线程池写法
-//        ExecutorService executor = Executors.newFixedThreadPool(10);
+        ExecutorService executor = Executors.newFixedThreadPool(10);
         // JAVA 21 新的虚拟线程写法，如果这个报错，修改为上面的
-        ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+//        ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
         users.forEach(user -> {
             executor.submit(() -> {
                 log.info("任务 {} 开始执行", Thread.currentThread().getName());
@@ -202,7 +202,8 @@ public class DepositEntity {
                 : String.format("<span style=\"%s\">%s（%s%%）</span>", greenColorStyle, stockTotalDayIncome,
                     stockTotalDayIncomePercent.setScale(2, BigDecimal.ROUND_HALF_UP));
 
-            BigDecimal totalDayIncomePercent = totalDayIncome.multiply(new BigDecimal("100")).divide(totalMarketValue.subtract(totalDayIncome),
+            BigDecimal totalDayIncomePercent = totalDayIncome.multiply(new BigDecimal("100")).divide(
+                totalMarketValue.subtract(totalDayIncome),
                 BigDecimal.ROUND_HALF_UP);
             String totalDayIncomeContent = totalDayIncome.compareTo(BigDecimal.ZERO) >= 0
                 ? String.format("<span style=\"%s\">%s（%s%%）</span>", redColorStyle, totalDayIncome,
@@ -217,7 +218,7 @@ public class DepositEntity {
                 BigDecimal dayIncomePercent = BigDecimal.ZERO;
                 if (item.marketValue().subtract(item.dayIncome()).compareTo(BigDecimal.ZERO) != 0) {
                     dayIncomePercent = item.dayIncome().multiply(new BigDecimal("100"))
-                            .divide(item.marketValue().subtract(item.dayIncome()), BigDecimal.ROUND_HALF_UP);
+                        .divide(item.marketValue().subtract(item.dayIncome()), BigDecimal.ROUND_HALF_UP);
                 }
                 BigDecimal stockTotalIncomePercent = BigDecimal.ZERO;
                 if (item.marketValue().subtract(item.totalIncome()).compareTo(BigDecimal.ZERO) != 0) {

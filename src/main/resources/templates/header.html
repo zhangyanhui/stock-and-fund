@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
-<header class="am-topbar admin-header">
+<header class="am-topbar admin-header" th:fragment="header">
     <div class="am-topbar-brand"><img th:src="@{/i/logo.png}"></div>
     <div class="am-collapse am-topbar-collapse" id="topbar-collapse">
         <ul class="am-nav am-nav-pills am-topbar-nav admin-header-list">
             <li class="kuanjie">
                 <a th:href="@{/main.html}">股票基金汇总</a>
                 <a th:href="@{/fund.html}">基金</a>
+                <a th:href="@{/fund/list}">基金列表</a>
                 <a th:href="@{/stock.html}">股票</a>
                 <a th:href="@{/deposit.html}">每日收益汇总</a>
                 <a th:href="@{/depositMonth.html}">月度收益汇总</a>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
-<div class="nav-navicon admin-main admin-sidebar">
+<div class="nav-navicon admin-main admin-sidebar" th:fragment="sidebar">
     <div class="sideMenu am-icon-dashboard" style="color:#aeb2b7; margin: 10px 0 0 0;"> 欢迎</div>
     <div class="sideMenu">
         <h3 class="am-icon-flag on" style="font-size:12px;"><em></em> <a th:href="@{/main.html}">股票基金汇总</a></h3>
@@ -9,6 +9,7 @@
         <h3 class="am-icon-flag on" style="font-size:12px;"><em></em> <a th:href="@{/fund.html}">基金</a></h3>
 <!--        <ul id="financingList">-->
 <!--        </ul>-->
+        <h3 class="am-icon-flag on" style="font-size:12px;"><em></em> <a th:href="@{/fund/list}">基金列表</a></h3>
         <h3 class="am-icon-flag on" style="font-size:12px;"><em></em> <a th:href="@{/stock.html}">股票</a></h3>
 <!--        <ul id="creditcardList">-->
 <!--        </ul>-->

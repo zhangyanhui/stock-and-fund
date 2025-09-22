@@ -8,6 +8,7 @@ import com.buxuesong.account.domain.service.CacheService;
 import com.buxuesong.account.infrastructure.adapter.rest.SinaRestClient;
 import com.buxuesong.account.infrastructure.adapter.rest.TiantianFundRestClient;
 import com.buxuesong.account.infrastructure.adapter.rest.response.StockDayHistoryResponse;
+import com.buxuesong.account.infrastructure.general.entity.FundInfo;
 import com.buxuesong.account.infrastructure.general.utils.DateTimeUtils;
 import com.buxuesong.account.infrastructure.general.utils.UserUtils;
 import com.buxuesong.account.infrastructure.persistent.po.FundHisPO;
@@ -22,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -325,6 +327,25 @@ public class FundEntity {
     private FundJZMapper fundJZMapper;
     @Autowired
     private CacheService cacheService;
+
+    public List<FundEntity> getFundEntity(List<FundInfo> fundInfoList) {
+        List list = new ArrayList();
+        if (!CollectionUtils.isEmpty(fundInfoList)) {
+            FundEntity fundEntity = new FundEntity();
+
+            for (FundInfo fundInfo : fundInfoList) {
+                fundEntity.setApp(fundInfo.getOpenId());
+                fundEntity.setFundCode(fundInfo.getFundCode());
+                fundEntity.setBonds(fundInfo.getFundCount() + "");
+                fundEntity.setFundName(fundInfo.getFundName());
+                fundEntity.setCostPrise(fundInfo.getFundCost() + "");
+                list.add(fundEntity);
+
+            }
+        }
+
+        return list;
+    }
 
     public List<FundEntity> getFundDetails(List<String> codes) {
         List<FundEntity> funds = new ArrayList<>();

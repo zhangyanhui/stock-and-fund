@@ -301,6 +301,9 @@
                                 <div class="detail-label">导入日期</div>
                                 <div class="detail-value">${fund.importDate || 'N/A'}</div>
                             </div>
+                            <div class="detail-item">
+                                <button class="btn btn-primary btn-sm" onclick="editFund(${JSON.stringify(fund).replace(/"/g, '&quot;')})"><i class="fa fa-pencil"></i> 编辑</button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -355,6 +358,178 @@
             $('#errorDiv').show();
             $('#fundListContainer').empty();
         }
+    </script>
+    
+    <!-- 编辑基金模态框 -->
+    <div class="modal fade" id="editFundModal" tabindex="-1" role="dialog" aria-labelledby="editFundModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="editFundModalLabel">编辑基金信息</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editFundForm">
+                        <input type="hidden" id="fundId">
+                        <input type="hidden" id="fundCode">
+                        <div class="form-group">
+                            <label for="fundName">基金名称</label>
+                            <input type="text" class="form-control" id="fundName" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="fundCount">持有份额</label>
+                            <input type="number" step="0.01" class="form-control" id="fundCount">
+                        </div>
+                        <div class="form-group">
+                            <label for="fundCost">成本价</label>
+                            <input type="number" step="0.0001" class="form-control" id="fundCost">
+                        </div>
+                        <div class="form-group">
+                            <label for="app">APP</label>
+                            <select class="form-control" id="app">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="submitEditFund()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 初始化APP下拉列表
+        function initAppDropdown() {
+            $.ajax({
+                url: '/app/list',
+                method: 'GET',
+                success: function(response) {
+                    if (response && response.success) {
+                        const appList = response.data || [];
+                        const appSelect = $('#app');
+                        appSelect.empty();
+                        appSelect.append('<option value="">请选择</option>');
+                        appList.forEach(function(app) {
+                            appSelect.append(`<option value="${app.openId}">${app.appName}</option>`);
+                        });
+                    }
+                }
+            });
+        }
+        
+        // 编辑基金
+        function editFund(fund) {
+            initAppDropdown();
+            $('#fundId').val(fund.id || '');
+            $('#fundCode').val(fund.fundCode || '');
+            $('#fundName').val(fund.fundName || '');
+            $('#fundCount').val((fund.fundCount || 0).toFixed(2));
+            $('#fundCost').val((fund.fundCost || 0).toFixed(4));
+            $('#app').val(fund.openid || '');
+            $('#editFundModal').modal('show');
+        }
+        
+        // 提交编辑的基金信息
+        function submitEditFund() {
+    alert('开始提交编辑基金信息');
+    console.log('----- submitEditFund 函数被调用 -----');
+    
+    // 检查JQuery是否可用
+    console.log('JQuery可用状态: ', typeof $ !== 'undefined');
+    
+    // 检查DOM元素是否存在
+    console.log('编辑模态框存在: ', $('#editFundModal').length > 0);
+    console.log('表单元素存在: ', $('#fundId').length > 0 && $('#fundCode').length > 0);
+    
+    // 获取表单数据
+    const id = $('#fundId').val();
+    const fundCode = $('#fundCode').val();
+    const fundCount = $('#fundCount').val();
+    const fundCost = $('#fundCost').val();
+    const app = $('#app').val();
+    const fundName = $('#fundName').val();
+    
+    console.log('表单数据 - id: ' + id + ', code: ' + fundCode + ', name: ' + fundName + ', bonds: ' + fundCount + ', app: ' + app);
+    
+    // 根据后端FundListController的updateFundInfo方法要求的参数格式构建请求
+    const req = {
+        "id": id,
+        "code": fundCode,
+        "name": fundName,
+        "bonds": parseFloat(fundCount),
+        "app": app
+    };
+    
+    console.log('构建的请求数据:', req);
+    console.log('请求数据JSON格式:', JSON.stringify(req));
+    
+    console.log('准备发送AJAX请求到: /fund/api/updateFundInfo');
+    
+    $.ajax({
+        url: '/fund/api/updateFundInfo',
+        method: 'POST',
+        data: JSON.stringify(req),
+        contentType: 'application/json',
+        beforeSend: function(xhr) {
+            console.log('即将发送请求，设置请求头信息');
+            // 可以在这里查看或设置请求头
+            console.log('ContentType:', 'application/json');
+        },
+        success: function(response) {
+            console.log('----- 请求成功响应 -----');
+            console.log('响应状态码:', this.status);
+            console.log('完整响应对象:', response);
+            console.log('响应代码:', response.code);
+            console.log('响应消息:', response.msg);
+            console.log('响应数据:', response.value);
+            
+            if (response && response.code === '00000000') {
+                console.log('更新成功，准备关闭模态框并刷新列表');
+                alert('保存成功！');
+                $('#editFundModal').modal('hide');
+                loadFundList(); // 重新加载基金列表
+            } else {
+                console.log('更新失败，错误码:', response.code, '错误消息:', response.msg);
+                alert('保存失败：' + (response.msg || '未知错误'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('----- 请求发生错误 -----');
+            console.error('错误状态:', status);
+            console.error('错误信息:', error);
+            console.error('XHR对象状态:', xhr.status);
+            console.error('XHR状态文本:', xhr.statusText);
+            console.error('响应文本:', xhr.responseText);
+            console.error('请求URL:', this.url);
+            console.error('请求类型:', this.type);
+            
+            // 尝试解析响应文本
+            try {
+                const parsedError = JSON.parse(xhr.responseText);
+                console.error('解析后的错误响应:', parsedError);
+            } catch (e) {
+                console.error('无法解析响应文本为JSON');
+            }
+            
+            alert('网络请求失败: ' + error);
+        },
+        complete: function(xhr, status) {
+            console.log('----- 请求完成 -----');
+            console.log('完成状态:', status);
+            console.log('XHR最终状态:', xhr.status);
+        }
+    });
+}
+        
+        // 页面加载完成后初始化
+        $(document).ready(function() {
+            // 已有的初始化代码继续保留
+        });
     </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.buxuesong.account.infrastructure.general.utils;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -16,6 +17,14 @@ public class DateTimeUtils {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 判断是否为交易日（周一至周五）
+     */
+    public static boolean isTradingDay() {
+        DayOfWeek dayOfWeek = LocalDateTime.now().getDayOfWeek();
+        return dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY;
     }
 
     public static String getLocalDateTime() {

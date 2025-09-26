@@ -19,6 +19,9 @@ import com.buxuesong.account.infrastructure.persistent.repository.FundJZMapper;
 import com.buxuesong.account.infrastructure.persistent.repository.FundMapper;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,11 +37,17 @@ import java.util.*;
 
 @Slf4j
 @Service
+@Getter
+@Setter
 public class FundEntity {
     @SerializedName("fundcode")
     private String fundCode;
     @SerializedName("name")
     private String fundName;
+    private String openId;
+    private String App;
+    private String id;
+
     private String jzrq;// 净值日期
     private String dwjz;// 当日净值
     private String gsz; // 估算净值
@@ -47,7 +56,6 @@ public class FundEntity {
 
     private String costPrise;// 持仓成本价
     private String bonds;// 持有份额
-    private String app;// 支付宝/东方财富/东方证券
     private String incomePercent;// 收益率
     private String income;// 收益
 
@@ -80,20 +88,20 @@ public class FundEntity {
         this.fundName = "--";
     }
 
-    public static void loadFund(FundEntity fund, Map<String, String[]> codeMap) {
-        String code = fund.getFundCode();
-        if (codeMap.containsKey(code)) {
-            String[] codeStr = codeMap.get(code);
-            if (codeStr.length > 3) {
-                fund.setCostPrise(codeStr[1]);
-                fund.setBonds(codeStr[2]);
-                fund.setApp(codeStr[3]);
-            } else {
-                fund.setCostPrise(codeStr[1]);
-                fund.setBonds(codeStr[2]);
-            }
-        }
-    }
+//    public static void loadFund(FundEntity fund, Map<String, String[]> codeMap) {
+//        String code = fund.getFundCode();
+//        if (codeMap.containsKey(code)) {
+//            String[] codeStr = codeMap.get(code);
+//            if (codeStr.length > 3) {
+//                fund.setCostPrise(codeStr[1]);
+//                fund.setBonds(codeStr[2]);
+//                fund.setOpenId(codeStr[3]);
+//            } else {
+//                fund.setCostPrise(codeStr[1]);
+//                fund.setBonds(codeStr[2]);
+//            }
+//        }
+//    }
 
     public static FundEntity loadFundFromSina(String code, String fundStr) {
         fundStr = fundStr.replaceAll("var hq_str_sz" + code + "=", "")
@@ -214,14 +222,6 @@ public class FundEntity {
         this.income = income;
     }
 
-    public String getApp() {
-        return app;
-    }
-
-    public void setApp(String app) {
-        this.app = app;
-    }
-
     public boolean isHide() {
         return hide;
     }
@@ -307,7 +307,7 @@ public class FundEntity {
             ", bonds='" + bonds + '\'' +
             ", incomePercent='" + incomePercent + '\'' +
             ", income='" + income + '\'' +
-            ", app='" + app + '\'' +
+            ", app='" + App + '\'' +
             ", hide='" + hide + '\'' +
             '}';
     }
@@ -331,16 +331,134 @@ public class FundEntity {
     public List<FundEntity> getFundEntity(List<FundInfo> fundInfoList) {
         List list = new ArrayList();
         if (!CollectionUtils.isEmpty(fundInfoList)) {
-            FundEntity fundEntity = new FundEntity();
-
             for (FundInfo fundInfo : fundInfoList) {
+                FundEntity fundEntity = new FundEntity();
                 fundEntity.setApp(fundInfo.getOpenId());
                 fundEntity.setFundCode(fundInfo.getFundCode());
                 fundEntity.setBonds(fundInfo.getFundCount() + "");
                 fundEntity.setFundName(fundInfo.getFundName());
                 fundEntity.setCostPrise(fundInfo.getFundCost() + "");
-                list.add(fundEntity);
+                fundEntity.setId(fundInfo.getId());
+                fundEntity.setOpenId(fundInfo.getOpenId());
 
+                String code = fundInfo.getFundCode();
+                if ("未找到对应基金代码".equals(code)) {
+//                    fundEntity.set
+                    continue;
+                }
+                try {
+                    String result = null;
+                    if (DateTimeUtils.isTradingTime()) {
+                        result = tiantianFundRestClient.getFundInfo(code);
+                    } else {
+                        result = cacheService.getFundInfoFromTiantianFund(code);
+                    }
+
+                    // 天天基金存在基金信息
+                    if (result != null && !result.equals("jsonpgz();")) {
+                        String json = result.substring(8, result.length() - 2);
+                        log.info("天天基金结果： {}", json);
+                        if (!json.isEmpty()) {
+                            FundEntity bean = gson.fromJson(json, FundEntity.class);
+//                            FundEntity.loadFund(bean, codeMap);
+
+                            BigDecimal now = new BigDecimal(bean.getGsz());
+                            String costPriceStr = bean.getCostPrise();
+                            if (StringUtils.isNotEmpty(costPriceStr)) {
+                                BigDecimal costPriceDec = new BigDecimal(costPriceStr);
+                                BigDecimal incomeDiff = now.add(costPriceDec.negate());
+                                if (costPriceDec.compareTo(BigDecimal.ZERO) <= 0) {
+                                    bean.setIncomePercent("0");
+                                } else {
+                                    BigDecimal incomePercentDec = incomeDiff.divide(costPriceDec, 8, RoundingMode.HALF_UP)
+                                        .multiply(BigDecimal.TEN)
+                                        .multiply(BigDecimal.TEN)
+                                        .setScale(3, RoundingMode.HALF_UP);
+                                    bean.setIncomePercent(incomePercentDec.toString());
+                                }
+
+                                String bondStr = bean.getBonds();
+                                if (StringUtils.isNotEmpty(bondStr)) {
+                                    BigDecimal bondDec = new BigDecimal(bondStr);
+                                    BigDecimal incomeDec = incomeDiff.multiply(bondDec)
+                                        .setScale(2, RoundingMode.HALF_UP);
+                                    bean.setIncome(incomeDec.toString());
+                                }
+                            }
+                            List<FundJZPO> fundJZPOs = fundJZMapper.findResent380FundJZByCode(bean.getFundCode());
+                            Optional<FundJZPO> optional = fundJZPOs.stream()
+                                .filter(item -> item.getFSRQ().equals(bean.getGztime().substring(0, 10))).findAny();
+                            // 当日净值已出
+                            if (optional.isPresent()) {
+                                FundJZPO currentDayFundJZPO = optional.get();
+                                int currentDayIndex = fundJZPOs.indexOf(currentDayFundJZPO);
+                                int previousDayIndex = currentDayIndex - 1;
+                                FundJZPO previousDayFundJZPO = fundJZPOs.get(previousDayIndex);
+                                bean.setCurrentDayJingzhi(currentDayFundJZPO.getDWJZ());
+                                bean.setPreviousDayJingzhi(previousDayFundJZPO.getDWJZ());
+                            }
+                            getRecentDateUpper(fundJZPOs, bean);
+                            list.add(bean);
+                            log.info("Fund编码:[" + code + "]信息：{}", bean);
+                        } else {
+                            log.info("Fund编码:[" + code + "]无法获取数据");
+                        }
+                        // 天天基金不存在基金信息，去新浪查找
+                    } else {
+                        if (DateTimeUtils.isTradingTime()) {
+                            result = sinaRestClient.getFundInfo(code);
+                        } else {
+                            result = cacheService.getFundInfoFromSina(code);
+                        }
+                        log.info("sina基金结果： {}", result);
+                        FundEntity bean = FundEntity.loadFundFromSina(code, result);
+//                        FundEntity.loadFund(bean, codeMap);
+                        BigDecimal now = new BigDecimal(bean.getGsz());
+                        String costPriceStr = bean.getCostPrise();
+                        if (StringUtils.isNotEmpty(costPriceStr)) {
+                            BigDecimal costPriceDec = new BigDecimal(costPriceStr);
+                            BigDecimal incomeDiff = now.add(costPriceDec.negate());
+                            if (costPriceDec.compareTo(BigDecimal.ZERO) <= 0) {
+                                bean.setIncomePercent("0");
+                            } else {
+                                BigDecimal incomePercentDec = incomeDiff.divide(costPriceDec, 8, RoundingMode.HALF_UP)
+                                    .multiply(BigDecimal.TEN)
+                                    .multiply(BigDecimal.TEN)
+                                    .setScale(3, RoundingMode.HALF_UP);
+                                bean.setIncomePercent(incomePercentDec.toString());
+                            }
+
+                            String bondStr = bean.getBonds();
+                            if (StringUtils.isNotEmpty(bondStr)) {
+                                BigDecimal bondDec = new BigDecimal(bondStr);
+                                BigDecimal incomeDec = incomeDiff.multiply(bondDec)
+                                    .setScale(2, RoundingMode.HALF_UP);
+                                bean.setIncome(incomeDec.toString());
+                            }
+                        }
+                        List<FundJZPO> fundJZPOs = fundJZMapper.findResent380FundJZByCode(bean.getFundCode());
+                        Optional<FundJZPO> optional = fundJZPOs.stream()
+                            .filter(item -> item.getFSRQ().equals(bean.getGztime().substring(0, 10))).findAny();
+                        // 当日净值已出
+                        if (optional.isPresent()) {
+                            FundJZPO currentDayFundJZPO = optional.get();
+                            int currentDayIndex = fundJZPOs.indexOf(currentDayFundJZPO);
+                            int previousDayIndex = currentDayIndex - 1;
+                            FundJZPO previousDayFundJZPO = fundJZPOs.get(previousDayIndex);
+                            bean.setCurrentDayJingzhi(currentDayFundJZPO.getDWJZ());
+                            bean.setPreviousDayJingzhi(previousDayFundJZPO.getDWJZ());
+                        }
+                        getRecentDateUpper(fundJZPOs, bean);
+
+                        list.add(bean);
+                        log.info("Fund编码:[" + code + "]信息：{}", bean);
+                    }
+                } catch (Exception e) {
+                    log.info("Fund编码:[" + code + "]异常");
+                    e.printStackTrace();
+                }
+
+//                list.add(fundEntity);
             }
         }
 
@@ -377,7 +495,7 @@ public class FundEntity {
                     log.info("天天基金结果： {}", json);
                     if (!json.isEmpty()) {
                         FundEntity bean = gson.fromJson(json, FundEntity.class);
-                        FundEntity.loadFund(bean, codeMap);
+//                        FundEntity.loadFund(bean, codeMap);
 
                         BigDecimal now = new BigDecimal(bean.getGsz());
                         String costPriceStr = bean.getCostPrise();
@@ -429,7 +547,7 @@ public class FundEntity {
                     }
                     log.info("sina基金结果： {}", result);
                     FundEntity bean = FundEntity.loadFundFromSina(code, result);
-                    FundEntity.loadFund(bean, codeMap);
+//                    FundEntity.loadFund(bean, codeMap);
                     BigDecimal now = new BigDecimal(bean.getGsz());
                     String costPriceStr = bean.getCostPrise();
                     if (StringUtils.isNotEmpty(costPriceStr)) {
@@ -466,6 +584,7 @@ public class FundEntity {
                         bean.setPreviousDayJingzhi(previousDayFundJZPO.getDWJZ());
                     }
                     getRecentDateUpper(fundJZPOs, bean);
+
                     funds.add(bean);
                     log.info("Fund编码:[" + code + "]信息：{}", bean);
                 }

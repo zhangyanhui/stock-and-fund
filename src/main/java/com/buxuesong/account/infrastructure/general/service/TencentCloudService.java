@@ -79,6 +79,22 @@ public class TencentCloudService {
     }
 
     /**
+     * 调用updateFundInfo云函数
+     *
+     * @param envId  环境ID
+     * @param token  认证令牌
+     * @param openId 用户openId（可选）
+     * @return 响应结果
+     */
+    public String callUpdateFundInfo(String envId, String token, String openId) {
+        Map<String, Object> payload = new HashMap<>();
+        if (openId != null && !openId.isEmpty()) {
+            payload.put("openId", openId);
+        }
+        return callCloudFunction(envId, "updateFundInfo", token, payload);
+    }
+
+    /**
      * 调用腾讯云函数（使用空参数）
      *
      * @param envId        环境ID

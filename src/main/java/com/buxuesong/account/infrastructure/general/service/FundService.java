@@ -68,12 +68,8 @@ public class FundService {
             // 打印token
             logger.info("token: {}", token);
 
-            // 调用云函数
-//            String responseJson = tencentCloudService.callCloudFunction(envId, functionName, token, payload);
-//// 使用示例
-//            String result = HttpClientUtil.callTencentCloudFunction(envId, functionName, token);
-//            System.out.println(result);
-            String responseJson = HttpClientUtil.callTencentCloudFunction(envId, functionName, token);
+            // 调用云函数，传递参数
+            String responseJson = HttpClientUtil.callTencentCloudFunction(envId, functionName, token, payload);
             //
             logger.info("responseJson: {}", responseJson);
 

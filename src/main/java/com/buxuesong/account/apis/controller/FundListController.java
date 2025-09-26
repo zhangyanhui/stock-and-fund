@@ -1,15 +1,14 @@
 package com.buxuesong.account.apis.controller;
 
 import com.buxuesong.account.apis.model.response.Response;
-import com.buxuesong.account.infrastructure.general.service.TencentCloudService;
 import com.buxuesong.account.domain.model.fund.FundEntity;
 import com.buxuesong.account.infrastructure.adapter.rest.SinaRestClient;
 import com.buxuesong.account.infrastructure.adapter.rest.TiantianFundRestClient;
 import com.buxuesong.account.infrastructure.general.entity.FundInfo;
 import com.buxuesong.account.infrastructure.general.service.FundService;
-import com.buxuesong.account.infrastructure.general.utils.UserUtils;
-import com.buxuesong.account.infrastructure.persistent.po.FundPO;
+import com.buxuesong.account.infrastructure.general.service.TencentCloudService;
 import com.google.gson.Gson;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,12 +18,10 @@ import org.springframework.ui.Model;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 基金列表控制器

@@ -26,7 +26,7 @@ hs_err_pid*
 *.gz
 *.iml
 
-target*
+# target*
 
 APP_HOME_LOG*/*
 docker/*

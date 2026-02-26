@@ -48,7 +48,16 @@ public class SecurityConfig implements WebMvcConfigurer {
 //        users.createUser(User.withUsername("aaa")
 //                .password(PasswordEncoderFactories.createDelegatingPasswordEncoder().encode("bbb"))
 //                .authorities(ACCOUNT_CLIENT_AUTHORITY).build());
-        return new JdbcUserDetailsManager(dataSource);
+        JdbcUserDetailsManager manager = new JdbcUserDetailsManager(dataSource);
+        // 配置使用小写表名
+        manager.setUsersByUsernameQuery("select username,password,enabled from users where username = ?");
+        manager.setAuthoritiesByUsernameQuery("select username,authority from authorities where username = ?");
+        manager.setCreateUserSql("insert into users (username, password, enabled) values (?, ?, ?)");
+        manager.setCreateAuthoritySql("insert into authorities (username, authority) values (?, ?)");
+        manager.setDeleteUserSql("delete from users where username = ?");
+        manager.setChangePasswordSql("update users set password = ? where username = ?");
+        manager.setUserExistsSql("select username from users where username = ?");
+        return manager;
     }
 
     @Bean

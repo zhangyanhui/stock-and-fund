@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS OPEN_PERSISTENT_MONTH (
 );
 
 -- 登录用户数据
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS USERS (
   username varchar(50) NOT NULL,
   password varchar(100) NOT NULL,
   enabled tinyint(1) NOT NULL,
@@ -112,16 +112,16 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- 登录用户权限数据
-CREATE TABLE IF NOT EXISTS authorities (
+CREATE TABLE IF NOT EXISTS AUTHORITIES (
   username varchar(64) NOT NULL,
   authority varchar(64) NOT NULL,
-  CONSTRAINT fk_authorities_users FOREIGN KEY (username) REFERENCES users (username)
+  CONSTRAINT fk_authorities_users FOREIGN KEY (username) REFERENCES USERS (username)
 );
 
 -- 插入默认用户
-INSERT OR IGNORE INTO users (username, password, enabled) VALUES
+INSERT OR IGNORE INTO USERS (username, password, enabled) VALUES
   ('admin', '{bcrypt}$2a$10$ImeqoAbgCx3HdADX9Or08eTBqAM6SMnEEn8K/6a0bsZiGg.VzYxBu', 1);
 
 -- 插入默认权限
-INSERT OR IGNORE INTO authorities (username, authority) VALUES
+INSERT OR IGNORE INTO AUTHORITIES (username, authority) VALUES
   ('admin', 'ADMIN');

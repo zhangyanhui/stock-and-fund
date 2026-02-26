@@ -371,3 +371,12 @@ CREATE TABLE authorities (
   CONSTRAINT fk_authorities_users FOREIGN KEY (username) REFERENCES users (username)
 );
 ```
+
+## Railway 部署说明
+1. 连接 GitHub 仓库到 Railway
+2. 设置环境变量：
+   - TENCENT_CLOUD_ENV_ID: 腾讯云环境ID
+   - TENCENT_CLOUD_TOKEN: 腾讯云访问令牌
+   - TENCENT_CLOUD_FUND_FUNCTION_NAME: 基金函数名称
+3. Railway 会自动检测 Dockerfile 并进行构建
+4. 部署完成后，访问 Railway 提供的 URL

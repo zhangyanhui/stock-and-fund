@@ -4,7 +4,9 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # 配置国内 Maven 镜像源
-RUN mkdir -p /root/.m2 && echo '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+RUN mkdir -p /root/.m2 && \
+    cat > /root/.m2/settings.xml << 'EOF'
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
   <mirrors>
@@ -15,7 +17,8 @@ RUN mkdir -p /root/.m2 && echo '<settings xmlns="http://maven.apache.org/SETTING
       <url>https://maven.aliyun.com/repository/public</url>
     </mirror>
   </mirrors>
-</settings>' > /root/.m2/settings.xml
+</settings>
+EOF
 
 COPY pom.xml .
 COPY src ./src

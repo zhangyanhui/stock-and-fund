@@ -35,7 +35,7 @@ function getData() {
 
 function initData() {
     $.ajax({
-        url:"/fund",
+        url:"/fund/api/list",
         type:"get",
         data :{
         },
@@ -43,6 +43,7 @@ function initData() {
         contentType: 'application/x-www-form-urlencoded',
         success: function (data){
             var result = data.value;
+
             var str = getTableHtml(result);
             $("#nr").html(str);
         },
@@ -66,82 +67,90 @@ function getTableHtml(result){
     var totalmarketValue = new BigDecimal("0");
     var marketValuePercent = new BigDecimal("0");
     var fundTotalCostValue = new BigDecimal("0");
+    
+    // 第一次循环：计算总市值
     for(var k in result) {
         if (filteredApp != "ALL" && result[k].app != filteredApp) {
             continue;
         }
-        marketValue = new BigDecimal(parseFloat((new BigDecimal(result[k].gsz)).multiply(new BigDecimal(result[k].bonds))).toFixed(2));
+        // 检查关键字段，只计算有效数据的市值
+        var costPrise = result[k].costPrise;
+        var bonds = result[k].bonds;
+        var gsz = result[k].gsz;
+        
+        // 如果关键数据为null或空，跳过该行不计算
+        if (!costPrise || !bonds || costPrise === "null" || bonds === "null" || 
+            costPrise === "0" || bonds === "0") {
+            continue;
+        }
+        
+        gsz = gsz || "0";
+        marketValue = new BigDecimal(parseFloat((new BigDecimal(gsz)).multiply(new BigDecimal(bonds))).toFixed(2));
         totalmarketValue = totalmarketValue.add(marketValue);
     }
 
-
+    // 第二次循环：生成表格行
     for(var k in result) {
         if (filteredApp != "ALL" && result[k].app != filteredApp) {
             continue;
         }
-        // 计算基金总成本
-        var costPrice = new BigDecimal(result[k].costPrise+"");
-        var costPriceValue = new BigDecimal(parseFloat(costPrice.multiply(new BigDecimal(result[k].bonds))).toFixed(2));
-        fundTotalCostValue = fundTotalCostValue.add(costPriceValue);
-        if (result[k].currentDayJingzhi != null && result[k].currentDayJingzhi != '') {
-            result[k].gsz = result[k].currentDayJingzhi + '(实)';
-            dayIncome = new BigDecimal(parseFloat(((new BigDecimal(result[k].currentDayJingzhi + "")).subtract(new BigDecimal(result[k].previousDayJingzhi + ""))).multiply(new BigDecimal(result[k].bonds + ""))).toFixed(2));
-            marketValue = new BigDecimal(parseFloat((new BigDecimal(result[k].currentDayJingzhi + "")).multiply(new BigDecimal(result[k].bonds + ""))).toFixed(2));
-            result[k].income = marketValue.subtract(costPriceValue) + "";
-            result[k].incomePercent = marketValue.subtract(costPriceValue).multiply(new BigDecimal("100")).divide(costPriceValue) + "";
-        } else {
-            dayIncome = new BigDecimal(parseFloat((new BigDecimal(result[k].gszzl)).multiply((new BigDecimal(result[k].dwjz))).multiply(new BigDecimal(result[k].bonds)).divide(new BigDecimal("100"))).toFixed(2));
-            marketValue = new BigDecimal(parseFloat((new BigDecimal(result[k].gsz)).multiply(new BigDecimal(result[k].bonds))).toFixed(2));
-            result[k].gsz = result[k].gsz + '(估)';
-        }
-        totalDayIncome = totalDayIncome.add(dayIncome);
-        // totalmarketValue = totalmarketValue.add(marketValue);
-        if (totalmarketValue.compareTo(new BigDecimal("0")) != 0) {
-            marketValuePercent = marketValue.multiply(new BigDecimal("100")).divide(totalmarketValue);
-        }
-        totalIncome = totalIncome.add(new BigDecimal(result[k].income));
-        var dayIncomeStyle = dayIncome == 0 ? "" : (dayIncome > 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
-        var totalIncomeStyle = result[k].income == 0 ? "" : (result[k].income > 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
-        var oneYearAgoUpperStyle = result[k].oneYearAgoUpper == 0 ? "" : (result[k].oneYearAgoUpper >= 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
-        var oneSeasonAgoUpperStyle = result[k].oneSeasonAgoUpper == 0 ? "" : (result[k].oneSeasonAgoUpper >= 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
-        var oneMonthAgoUpperStyle = result[k].oneMonthAgoUpper == 0 ? "" : (result[k].oneMonthAgoUpper >= 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
-        var oneWeekAgoUpperStyle = result[k].oneWeekAgoUpper == 0 ? "" : (result[k].oneWeekAgoUpper >= 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
 
-        str += "<tr><td class='no-wrap'>"
-            + "<a href='#' onclick=\"filterApp('" + result[k].app + "')\">" + getAppName(result[k].app) + "</a>"
-            + "</td><td class='no-wrap' onclick=\"getFundHistory('" + result[k].fundCode + "')\">" + result[k].fundName
-            + "</td><td " + dayIncomeStyle + ">" +result[k].gszzl + "%"
-            + "</td><td " + dayIncomeStyle + ">" + dayIncome
-            + "</td><td>" + result[k].dwjz + "(" + result[k].jzrq + ")"
-            + "</td><td>" + result[k].gsz
-            + "</td><td " + oneYearAgoUpperStyle + ">" + result[k].oneYearAgoUpper + "%"
-            + "</td><td " + oneSeasonAgoUpperStyle + ">" + result[k].oneSeasonAgoUpper + "%"
-            + "</td><td " + oneMonthAgoUpperStyle + ">" + result[k].oneMonthAgoUpper + "%"
-            + "</td><td " + oneWeekAgoUpperStyle + ">" + result[k].oneWeekAgoUpper + "%"
-            + "</td><td>" + result[k].costPrise
-            + "</td><td>" + result[k].bonds
-            + "</td><td>" + marketValue
-            + "</td><td>" + marketValuePercent + "%"
+        // 检查必要字段是否有值，如果关键字段为null或空则跳过该行
+        var costPrise = result[k].costPrise;
+        var bonds = result[k].bonds;
+        var gsz = result[k].gsz;
+        var income = result[k].income;
+        var incomePercent = result[k].incomePercent;
+        var app = result[k].app || "";
+        var fundName = result[k].fundName || "";
+        var fundCode = result[k].fundCode || "";
+        var id = result[k].id || "";
+
+        // 如果关键数据为null或空，跳过该行不显示
+        if (!costPrise || !bonds || costPrise === "null" || bonds === "null" || 
+            costPrise === "0" || bonds === "0") {
+            continue;
+        }
+
+        // 设置默认值
+        gsz = gsz || "0";
+        income = income || "0";
+        incomePercent = incomePercent || "0";
+
+        // 计算市值
+        marketValue = new BigDecimal(parseFloat((new BigDecimal(gsz)).multiply(new BigDecimal(bonds))).toFixed(2));
+        
+        // 计算成本价值
+        var costPriceValue = new BigDecimal(parseFloat((new BigDecimal(costPrise)).multiply(new BigDecimal(bonds))).toFixed(2));
+        
+        // 计算市值占比
+        if (totalmarketValue.compareTo(new BigDecimal("0")) != 0) {
+            marketValuePercent = marketValue.multiply(new BigDecimal("100")).divide(totalmarketValue, 2, BigDecimal.ROUND_HALF_UP);
+        } else {
+            marketValuePercent = new BigDecimal("0");
+        }
+
+        // 设置收益颜色样式
+        var totalIncomeStyle = parseFloat(income) == 0 ? "" : (parseFloat(income) > 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
+
+        str += "<tr><td class='no-wrap'>" + (id || "-")
+            + "</td><td class='no-wrap'>"
+            + "<a href='#' onclick=\"filterApp('" + app + "')\">" + getAppName(app) + "</a>"
+            + "</td><td class='no-wrap' onclick=\"getFundHistory('" + fundCode + "')\">" + fundName
+            + "</td><td>" + costPrise
+            + "</td><td>" + bonds
+            + "</td><td>" + (gsz !== "0" ? marketValue : "-")
+            + "</td><td>" + (gsz !== "0" ? marketValuePercent.toFixed(2) + "%" : "-")
             + "</td><td>" + costPriceValue
-            + "</td><td " + totalIncomeStyle + ">" + result[k].incomePercent + "%"
-            + "</td><td " + totalIncomeStyle + ">" + result[k].income
-            + "</td><td class='no-wrap'>" + "<button class=\"am-btn am-btn-default am-btn-xs am-text-secondary am-round\" data-am-modal=\"{target: '#my-popups'}\" type=\"button\" title=\"修改\" onclick=\"updateFund('" + result[k].fundCode + "','" + result[k].costPrise + "','" + result[k].bonds + "','" + result[k].app + "','" + result[k].fundName + "')\">"
+            + "</td><td " + totalIncomeStyle + ">" + (incomePercent !== "0" ? incomePercent + "%" : "-")
+            + "</td><td " + totalIncomeStyle + ">" + (income !== "0" ? income : "-")
+            + "</td><td class='no-wrap'>" + "<button class=\"am-btn am-btn-default am-btn-xs am-text-secondary am-round\" data-am-modal=\"{target: '#my-popups'}\" type=\"button\" title=\"修改\" onclick=\"updateFund('" + fundCode + "','" + costPrise + "','" + bonds + "','" + app + "','" + fundName + "','" + id + "')\">"
             + "<span class=\"am-icon-pencil-square-o\"></span></button>"
-            + "<button class=\"am-btn am-btn-default am-btn-xs am-text-secondary am-round\" data-am-modal=\"{target: '#my-popups'}\" type=\"button\" title=\"删除\" onclick=\"deleteFund('" + result[k].fundCode + "')\">"
+            + "<button class=\"am-btn am-btn-default am-btn-xs am-text-secondary am-round\" data-am-modal=\"{target: '#my-popups'}\" type=\"button\" title=\"删除\" onclick=\"deleteFund('" + fundCode + "')\">"
             + "<span class=\"am-icon-remove\"></span></button>"
             +"</td></tr>";
-
     }
-    var totalDayIncomePercent = new BigDecimal("0");
-    var totalIncomePercent = new BigDecimal("0");
-    if (totalmarketValue != 0) {
-        totalDayIncomePercent = totalDayIncome.multiply(new BigDecimal("100")).divide(totalmarketValue.subtract(totalDayIncome));
-        totalIncomePercent = totalIncome.multiply(new BigDecimal("100")).divide(fundTotalCostValue);
-    }
-    var totalDayIncomePercentStyle = totalDayIncome == 0 ? "" : (totalDayIncome > 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
-    var totalIncomePercentStyle = totalIncome == 0 ? "" : (totalIncome > 0?"style=\"color:#c12e2a\"":"style=\"color:#3e8f3e\"");
-    str += "<tr><td>合计</td><td></td><td " + totalDayIncomePercentStyle + ">" + totalDayIncomePercent + "%</td><td " + totalDayIncomePercentStyle + ">" + totalDayIncome + "</td><td colspan='8'></td><td colspan='2'>" + totalmarketValue + "</td><td>"+fundTotalCostValue+"</td><td " + totalIncomePercentStyle + ">" + totalIncomePercent + "%</td><td " + totalIncomePercentStyle + ">" + totalIncome
-        +"</td><td></td></tr>";
+    
     return str;
 }
 
@@ -194,7 +203,7 @@ function deleteFund(code){
     });
 }
 
-function updateFund(code, costPrise, bonds, app, name){
+function updateFund(code, costPrise, bonds, app, name, id){
     // var iHeight = 600;
     // var iWidth = 800;
     // //获得窗口的垂直位置
@@ -207,26 +216,73 @@ function updateFund(code, costPrise, bonds, app, name){
     $("#costPrise").val(costPrise);
     $("#bonds").val(bonds);
     $("#app").val(app);
+    $("#fundId").val(id || "");
     $("#myModal").modal();
-
-    // window.open ('/updateStockAndFund.html?code='+code+'&type=fund', 'newwindow', 'height='+iHeight+', width='+iWidth+', top='+iTop+', left='+iLeft+', toolbar=no, menubar=no, scrollbars=no, resizable=no,location=no, status=no');
 }
 
 function submitStockAndFund(){
+
     var type =$("#type").val();
+
     var code =$("#code").val();
     var costPrise =$("#costPrise").val();
     var bonds =$("#bonds").val();
     var app = $("#app").val();
+
+    // 获取所有表单字段
+    var name = $("#name").val();
+    var jzrq = $("#jzrq").val();
+    var dwjz = $("#dwjz").val();
+    var gsz = $("#gsz").val();
+    var gszzl = $("#gszzl").val();
+    var gztime = $("#gztime").val();
+    var oneYearAgoUpper = $("#oneYearAgoUpper").val();
+    var oneQuarterAgoUpper = $("#oneSeasonAgoUpper").val(); // 修正字段名
+    var oneMonthAgoUpper = $("#oneMonthAgoUpper").val();
+    var oneWeekAgoUpper = $("#oneWeekAgoUpper").val();
+    var threeDaysAgoUpper = $("#threeDaysAgoUpper").val();
+    var currentDayJingzhi = $("#currentDayJingzhi").val();
+    var previousDayJingzhi = $("#previousDayJingzhi").val();
+    var hide = $("#hide").val();
+    var id = $("#fundId").val();
+        // alert(5);
+        
     var req = {
+        "id": id,
+        "fundCode": code,
+        "fundName": name,
+        "fundCount": bonds,
+        "holdingProfit": 0, // 修复：使用默认值0，因为income变量未定义
+        "fundAmt": gsz || 0,
+        "unitNetValue": dwjz || 0,
+        "netValueDate": jzrq || "",
+        "openid": app || "",
+        // 保留原有字段以确保本地保存正常工作
         "code": code,
         "costPrise": costPrise,
         "bonds": bonds,
-        "app": app
+        "app": app,
+        "name": name,
+        "jzrq": jzrq,
+        "dwjz": dwjz,
+        "gsz": gsz,
+        "gszzl": gszzl,
+        "gztime": gztime,
+        "oneYearAgoUpper": oneYearAgoUpper,
+        "oneQuarterAgoUpper": oneQuarterAgoUpper,
+        "oneMonthAgoUpper": oneMonthAgoUpper,
+        "oneWeekAgoUpper": oneWeekAgoUpper,
+        "threeDaysAgoUpper": threeDaysAgoUpper,
+        "currentDayJingzhi": currentDayJingzhi,
+        "previousDayJingzhi": previousDayJingzhi,
+        "hide": hide
     }
+   
+
     var url = null;
+    
     if(type=="fund"){
-        url = "/saveFund";
+        url = "/fund/api/updateFundInfo";
     }else{
         url = "/saveStock";
     }
@@ -236,11 +292,14 @@ function submitStockAndFund(){
         data : JSON.stringify(req),
         dataType:'json',
         contentType: 'application/json',
+      
         success: function (data){
             if(data.code!="00000000"){
-                alert("添加失败！");
+                alert("更新失败！");
                 $("#myModal").modal( "hide" );
             }else{
+                alert("更新成功！");
+                $("#myModal").modal( "hide" );
                 // window.opener.getData();
                 location.reload();
             }
@@ -359,6 +418,64 @@ function getFundHistory(code){
             console.log(XMLHttpRequest.status);
             console.log(XMLHttpRequest.readyState);
             console.log(textStatus);
+        }
+    });
+}
+
+/**
+ * 调用updateFundInfo云函数
+ */
+function callUpdateFundInfoCloudFunction(fundData) {
+    console.log("开始调用updateFundInfo云函数...");
+    
+    // 构建请求参数，包含基金信息
+    var requestData = {};
+    
+    // 如果传入了基金数据，使用传入的数据
+    if (fundData) {
+        requestData = {
+            fundCode: fundData.code,
+            fundName: fundData.name || '',
+            costPrice: fundData.costPrise,
+            bonds: fundData.bonds,
+            app: fundData.app,
+            operationType: 'save' // 操作类型：保存
+        };
+    } else {
+        // 如果没有传入数据，尝试从当前表单获取
+        var code = $("#code").val();
+        var costPrise = $("#costPrise").val();
+        var bonds = $("#bonds").val();
+        var app = $("#app").val();
+        
+        if (code) {
+            requestData = {
+                fundCode: code,
+                costPrice: costPrise,
+                bonds: bonds,
+                app: app,
+                operationType: 'save'
+            };
+        }
+    }
+    
+    console.log("传递给云函数的参数:", requestData);
+    
+    $.ajax({
+        url: "/api/fund/updateFundInfo",
+        type: "post",
+        data: JSON.stringify(requestData),
+        dataType: 'json',
+        contentType: 'application/json',
+        success: function (data) {
+            if (data.code === "00000000") {
+                console.log("updateFundInfo云函数调用成功:", data.value);
+            } else {
+                console.error("updateFundInfo云函数调用失败:", data.msg);
+            }
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+            console.error("调用updateFundInfo云函数出错:", textStatus, errorThrown);
         }
     });
 }

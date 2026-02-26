@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationContextInitializer=\
+com.buxuesong.account.infrastructure.general.config.DotEnvConfig

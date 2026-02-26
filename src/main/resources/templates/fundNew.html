@@ -352,6 +352,11 @@
             success: function (data){
                 if(data.code!="00000000"){
                     alert("添加失败！");
+                } else {
+                    // 保存成功后调用云函数，传递基金数据
+                    if(type=="fund"){
+                        callUpdateFundInfoCloudFunction(req);
+                    }
                 }
                 location.reload();
             },
@@ -366,6 +371,64 @@
     function initData() {
         fundTable.reload({
             url: '/fund'
+        });
+    }
+
+    /**
+     * 调用updateFundInfo云函数
+     */
+    function callUpdateFundInfoCloudFunction(fundData) {
+        console.log("开始调用updateFundInfo云函数...");
+        
+        // 构建请求参数，包含基金信息
+        var requestData = {};
+        
+        // 如果传入了基金数据，使用传入的数据
+        if (fundData) {
+            requestData = {
+                fundCode: fundData.code,
+                fundName: fundData.name || '',
+                costPrice: fundData.costPrise,
+                bonds: fundData.bonds,
+                app: fundData.app,
+                operationType: 'save' // 操作类型：保存
+            };
+        } else {
+            // 如果没有传入数据，尝试从当前表单获取
+            var code = $("#code").val();
+            var costPrise = $("#costPrise").val();
+            var bonds = $("#bonds").val();
+            var app = $("#app").val();
+            
+            if (code) {
+                requestData = {
+                    fundCode: code,
+                    costPrice: costPrise,
+                    bonds: bonds,
+                    app: app,
+                    operationType: 'save'
+                };
+            }
+        }
+        
+        console.log("传递给云函数的参数:", requestData);
+        
+        $.ajax({
+            url: "/api/fund/updateFundInfo",
+            type: "post",
+            data: JSON.stringify(requestData),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (data) {
+                if (data.code === "00000000") {
+                    console.log("updateFundInfo云函数调用成功:", data.value);
+                } else {
+                    console.error("updateFundInfo云函数调用失败:", data.msg);
+                }
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                console.error("调用updateFundInfo云函数出错:", textStatus, errorThrown);
+            }
         });
     }
 </script>

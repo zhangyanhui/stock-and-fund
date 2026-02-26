@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>基金</title>
+    <link rel="stylesheet" th:href="@{/css/main.admin.css}" type="text/css" media="all"/>
+    <link rel="stylesheet" th:href="@{/css/main.amazeui.min.css}" type="text/css" media="all"/>
+    <link href="https://cdn.staticfile.org/layui/2.7.6/css/layui.css" rel="stylesheet">
+    <style>
+        body{padding: 6px 16px;}
+        .demo-carousel{height: 200px; line-height: 200px; text-align: center;}
+    </style>
+</head>
+<body>
+<header class="menu">
+    <div th:replace="headerNew.html"></div>
+</header>
+<blockquote class="layui-elem-quote"><div height="60px" id="stockLargeMarket"></div></blockquote>
+<blockquote class="layui-elem-quote">基金：您可在此页面查看基金当日情况，以及添加修改删除基金。<a href="mailto:buxuesong@foxmail.com">有任何问题点击这里联系作者: buxuesong@foxmail.com</a></blockquote>
+<div class="checkbox">
+    <input id="enableAutoRefresh" type="checkbox" checked="checked" name="enableAutoRefresh"> 定时刷新
+</div>
+
+<div>
+    <div id="model" style="display: none;">
+        <div class="modal-dialog modal-lg" style="padding-top: 10px;padding-bottom: 10px;padding-left: 10px;padding-right: 10px">
+            <div class="modal-content">
+                <!-- 模态框主体 -->
+                <div class="modal-body">
+                    <form class="am-form" id="saveOutComeForm">
+                        <input type="hidden" id="type" th:value="fund"/>
+                        <div class="am-form-group am-cf">
+                            <div class="zuo">基金名称：</div>
+                            <div class="you">
+                                <input type="text" disabled="disabled" class="am-input-sm" id="name" >
+                            </div>
+                        </div>
+                        <div class="am-form-group am-cf">
+                            <div class="zuo">基金编码：</div>
+                            <div class="you">
+                                <input type="text" class="am-input-sm" id="code" placeholder="请输入6位基金编码">
+                            </div>
+                        </div>
+                        <div class="am-form-group am-cf">
+                            <div class="zuo">持仓成本：</div>
+                            <div class="you">
+                                <input type="number" class="am-input-sm" id="costPrise" placeholder="请输入持仓成本">
+                            </div>
+                        </div>
+                        <div class="am-form-group am-cf">
+                            <div class="zuo">持有份额：</div>
+                            <div class="you">
+                                <input type="number" class="am-input-sm" id="bonds" placeholder="请输入持有份额">
+                            </div>
+                        </div>
+                        <div class="am-form-group am-cf">
+                            <div class="zuo">APP：</div>
+                            <div class="you">
+                                <select data-am-selected="{btnSize: 'sm'}" id="app">
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 模态框底部 -->
+                <div class="modal-footer">
+                    <button type="button" class="layui-btn" onclick="submitStockAndFund()">保存</button>
+                    <button type="button" class="layui-btn" onclick="layer.closeAll();">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table class="layui-hide" id="demo" lay-filter="test"></table>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="delete">删除</a>
+<!--    <a class="layui-btn layui-btn-xs" lay-event="more">更多 <i class="layui-icon layui-icon-down"></i></a>-->
+</script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/BigDecimal.js}"></script>
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/stockLargeMarket.js}"></script>
+<!-- 自动刷新 -->
+<script th:src="@{/js/trading-time-refresh.js}"></script>
+<script src="https://cdn.staticfile.org/layui/2.7.6/layui.js"></script>
+
+<script>
+    var appList;
+    var fundTable;
+    var active;
+    var modalLayer;
+    $.ajax({
+        url:"/param?type=APP",
+        type:"get",
+        data :{},
+        dataType:'json',
+        contentType: 'application/x-www-form-urlencoded',
+        success: function (data){
+            appList = data.value;
+            var app = $("#app");
+            app.find('option').remove();
+            app.append("<option value=''>请选择</option>");
+            for(var k in appList) {
+                var opt = $("<option></option>").text(appList[k].name).val(appList[k].code);
+                app.append(opt);
+            }
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+            console.log(XMLHttpRequest.status);
+            console.log(XMLHttpRequest.readyState);
+            console.log(textStatus);
+        }
+    });
+    getLargeMarketData();
+    layui.use(function(){
+        // 得到需要的内置组件
+        var layer = layui.layer; //弹层
+        var table = layui.table; //表格
+        var dropdown = layui.dropdown; //下拉菜单
+
+        // 向世界问个好
+        layer.msg('基金：您可在此页面查看基金当日情况，以及添加修改删除基金。');
+
+        // 执行一个 table 实例
+        fundTable = table.render({
+            elem: '#demo'
+            // ,height: 600
+            ,url: '/fund' //数据接口（此处为静态数据，仅作演示）
+            ,title: '用户表'
+            ,even: true //开启隔行背景
+            // ,page: true //开启分页
+            ,toolbar: 'default' //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
+            ,totalRow: true //开启合计行
+            ,parseData: function(res){ //res 即为原始返回的数据
+                var totalMarketValue = new BigDecimal("0");
+                for(var i=0;i<res.value.length;i++) {
+                    var item = res.value[i];
+                    totalMarketValue = totalMarketValue.add(new BigDecimal(parseFloat((new BigDecimal(item.gsz)).multiply(new BigDecimal(item.bonds))).toFixed(2)));
+                }
+                for(var i=0;i<res.value.length;i++){
+                    var item = res.value[i];
+                    item.appNew = getAppName(item.app);
+                    var marketValue = new BigDecimal("0");
+                    if (item.currentDayJingzhi != null && item.currentDayJingzhi != '') {
+                        item.gsz = item.currentDayJingzhi + '(实)';
+                        item.dayIncome = new BigDecimal(parseFloat(((new BigDecimal(item.currentDayJingzhi + "")).subtract(new BigDecimal(item.previousDayJingzhi + ""))).multiply(new BigDecimal(item.bonds + ""))).toFixed(2));
+                        marketValue = new BigDecimal(parseFloat((new BigDecimal(item.currentDayJingzhi + "")).multiply(new BigDecimal(item.bonds + ""))).toFixed(2));
+                        item.marketValue = marketValue + '';
+                        var costPrice = new BigDecimal(item.costPrise+"");
+                        var costPriceValue = new BigDecimal(parseFloat(costPrice.multiply(new BigDecimal(item.bonds))).toFixed(2));
+                        item.income = marketValue.subtract(costPriceValue) + "";
+                        item.incomePercent = marketValue.subtract(costPriceValue).multiply(new BigDecimal("100")).divide(costPriceValue) + "";
+                    } else {
+                        item.dayIncome = new BigDecimal(parseFloat((new BigDecimal(item.gszzl))
+                            .multiply((new BigDecimal(item.dwjz))).multiply(new BigDecimal(item.bonds))
+                            .divide(new BigDecimal("100"))).toFixed(2)) +'';
+                        marketValue = new BigDecimal(parseFloat((new BigDecimal(item.gsz)).multiply(new BigDecimal(item.bonds))).toFixed(2));
+                        item.marketValue = marketValue + '';
+                        item.gsz = item.gsz + '(估)';
+                    }
+                    item.dwjzNew = item.dwjz+ '(' + item.jzrq + ')';
+                    if (totalMarketValue.compareTo(new BigDecimal("0")) != 0) {
+                        item.marketValuePercent = marketValue.multiply(new BigDecimal("100")).divide(totalMarketValue) + "";
+                    }
+                    item.dayInComeColor = item.dayIncome == 0 ? "" : (item.dayIncome >= 0?"#c12e2a":"#3e8f3e");
+                    item.toltalIncomeColor = item.income == 0 ? "" : (item.income >= 0?"#c12e2a":"#3e8f3e");
+                    item.oneYearAgoUpperColor = item.oneYearAgoUpper == 0 ? "" : (item.oneYearAgoUpper >= 0?"#c12e2a":"#3e8f3e");
+                    item.oneSeasonAgoUpperColor = item.oneSeasonAgoUpper == 0 ? "" : (item.oneSeasonAgoUpper >= 0?"#c12e2a":"#3e8f3e");
+                    item.oneMonthAgoUpperColor = item.oneMonthAgoUpper == 0 ? "" : (item.oneMonthAgoUpper >= 0?"#c12e2a":"#3e8f3e");
+                    item.oneWeekAgoUpperColor = item.oneWeekAgoUpper == 0 ? "" : (item.oneWeekAgoUpper >= 0?"#c12e2a":"#3e8f3e");
+                }
+                return {
+                    "code": res.code, //解析接口状态
+                    "msg": res.msg, //解析提示文本
+                    "count": res.value.length, //解析数据长度
+                    "data": res.value //解析数据列表
+                };
+            }
+            ,cols: [ [ //表头
+                {type: 'checkbox'}
+                ,{field: 'appNew', title: 'APP', width: 120, sort: true,totalRow: '合计：',templet: function(d){return '<a style="color: #0000FF" onclick="filterApp(\'' + d.app + '\')">'+ d.appNew +'</a>'}}
+                ,{field: 'fundName', title: '基金名称', width:215}
+                ,{field: 'gszzl', title: '涨跌幅 %', width:120, sort: true,templet: function(d){return '<span style="color: ' + d.dayInComeColor + '">'+ d.gszzl +'</span>'}}
+                ,{field: 'dayIncome', title: '当日盈利', width:120, totalRow: true, sort: true,templet: function(d){return '<span style="color: ' + d.dayInComeColor + '">'+ d.dayIncome +'</span>'}}
+                ,{field: 'dwjzNew', title: '当日净值', width: 180}
+                ,{field: 'gsz', title: '估算净值', width:110, sort: true}
+                ,{field: 'oneYearAgoUpper', title: '近一年 %', width:120, sort: true, templet: function(d){return '<span style="color: ' + d.oneYearAgoUpperColor + '">'+ d.oneYearAgoUpper +'</span>'}}
+                ,{field: 'oneSeasonAgoUpper', title: '近一季度 %', width:120, sort: true, templet: function(d){return '<span style="color: ' + d.oneSeasonAgoUpperColor + '">'+ d.oneSeasonAgoUpper +'</span>'}}
+                ,{field: 'oneMonthAgoUpper', title: '近一月 %', width:120, sort: true, templet: function(d){return '<span style="color: ' + d.oneMonthAgoUpperColor + '">'+ d.oneMonthAgoUpper +'</span>'}}
+                ,{field: 'oneWeekAgoUpper', title: '近一周 %', width:120, sort: true, templet: function(d){return '<span style="color: ' + d.oneWeekAgoUpperColor + '">'+ d.oneWeekAgoUpper +'</span>'}}
+                ,{field: 'costPrise', title: '持仓成本', width: 110}
+                ,{field: 'bonds', title: '持有份额', width:120, sort: true}
+                ,{field: 'marketValue', title: '市值/金额', width: 110, sort: true, totalRow: true}
+                ,{field: 'marketValuePercent', title: '持仓比率 %', width: 120, sort: true}
+                ,{field: 'incomePercent', title: '收益率 %', width: 110, sort: true,templet: function(d){return '<span style="color: ' + d.toltalIncomeColor + '">'+ d.incomePercent +'</span>'}}
+                ,{field: 'income', title: '收益', width: 110, sort: true, totalRow: true,templet: function(d){return '<span style="color: ' + d.toltalIncomeColor + '">'+ d.income +'</span>'}}
+                ,{title: '操作', width: 150, align:'center', toolbar: '#barDemo'}
+            ] ]
+        });
+
+        // 头工具栏事件
+        table.on('toolbar(test)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id)
+                ,data = checkStatus.data; //获取选中的数据
+            switch(obj.event){
+                case 'add':
+                    layer.msg('添加');
+                    showDialog('fund');
+                    break;
+                case 'update':
+                    if(data.length === 0){
+                        layer.msg('请选择一行');
+                    } else if(data.length > 1){
+                        layer.msg('只能同时编辑一个');
+                    } else {
+                        updateFund(checkStatus.data[0].fundCode, checkStatus.data[0].costPrise, checkStatus.data[0].bonds, checkStatus.data[0].app, checkStatus.data[0].fundName);
+                    }
+                    break;
+                case 'delete':
+                    if(data.length === 0 || data.length > 1){
+                        layer.msg('请选择一行');
+                    } else {
+                        layer.msg('删除');
+                        layer.confirm('真的删除'+ checkStatus.data[0].fundName +'么?', function(index){
+                            layer.close(index);
+                            //向服务端发送删除指令
+                            deleteFund(checkStatus.data[0].fundCode);
+                            // obj.del(); //删除对应行（tr）的DOM结构
+                            location.reload();
+                        });
+
+                    }
+                    break;
+            };
+        });
+
+        //定时刷新
+        var time = setInterval('autoRefresh()', 30000)
+
+        // 单元格工具事件
+        table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data //获得当前行数据
+                ,layEvent = obj.event; //获得 lay-event 对应的值
+            if(layEvent === 'edit') {
+                layer.msg('编辑操作');
+                updateFund(data.fundCode, data.costPrise, data.bonds, data.app, data.fundName);
+            } else if (layEvent === 'delete') {
+                    layer.confirm('真的删除'+ data.fundName +'么?', function(index){
+                        layer.close(index);
+                        //向服务端发送删除指令
+                        deleteFund(data.fundCode);
+                        // obj.del(); //删除对应行（tr）的DOM结构
+                        location.reload();
+                    });
+            }
+        });
+        active = {
+            add: function () {
+                modalLayer = layer.open({
+                    type: 1
+                    ,title: '添加/修改基金'
+                    , id: 'layerDemo' //防止重复弹出
+                    , content: $('#model')
+                    // ,btn: '关闭全部'
+                    , area: ['800px', '600px']//定义宽和高
+                    , btnAlign: 'c' //按钮居中
+                    , shade: 0 //不显示遮罩
+                    , yes: function () {
+                        layer.closeAll();
+                    }
+                });
+            }
+        };
+    });
+
+    function showDialog(type) {
+        $("#name").val('');
+        $("#code").val('');
+        $("#costPrise").val('');
+        $("#bonds").val('');
+        $("#app").val('');
+        active.add();
+    }
+
+    function updateFund(code, costPrise, bonds, app, name) {
+        $("#code").val(code);
+        $("#costPrise").val(costPrise);
+        $("#bonds").val(bonds);
+        $("#app").val(app);
+        $("#name").val(name);
+        active.add();
+    }
+
+    function deleteFund(code) {
+        var url = "/deleteFund";
+        var req = {
+            "code" : code
+        }
+        $.ajax({
+            url: url,
+            type:"post",
+            data : JSON.stringify(req),
+            dataType:'json',
+            contentType: 'application/json',
+            success: function (data){
+                if(data.code=="00000000") {
+                }
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                console.log(XMLHttpRequest.status);
+                console.log(XMLHttpRequest.readyState);
+                console.log(textStatus);
+            }
+        });
+    }
+
+    function filterApp(app) {
+        fundTable.reload({
+            url: '/fund?app='+app
+        });
+    }
+
+    function submitStockAndFund(){
+        var type =$("#type").val();
+        var code =$("#code").val();
+        var costPrise =$("#costPrise").val();
+        var bonds =$("#bonds").val();
+        var app = $("#app").val();
+        var req = {
+            "code": code,
+            "costPrise": costPrise,
+            "bonds": bonds,
+            "app": app
+        }
+        var url = null;
+        if(type=="fund"){
+            url = "/saveFund";
+        }else{
+            url = "/saveStock";
+        }
+        $.ajax({
+            url: url,
+            type:"post",
+            data : JSON.stringify(req),
+            dataType:'json',
+            contentType: 'application/json',
+            success: function (data){
+                if(data.code!="00000000"){
+                    alert("添加失败！");
+                } else {
+                    // 保存成功后调用云函数，传递基金数据
+                    if(type=="fund"){
+                        callUpdateFundInfoCloudFunction(req);
+                    }
+                }
+                location.reload();
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                console.log(XMLHttpRequest.status);
+                console.log(XMLHttpRequest.readyState);
+                console.log(textStatus);
+            }
+        });
+    }
+
+    function initData() {
+        fundTable.reload({
+            url: '/fund'
+        });
+    }
+
+    /**
+     * 调用updateFundInfo云函数
+     */
+    function callUpdateFundInfoCloudFunction(fundData) {
+        console.log("开始调用updateFundInfo云函数...");
+        
+        // 构建请求参数，包含基金信息
+        var requestData = {};
+        
+        // 如果传入了基金数据，使用传入的数据
+        if (fundData) {
+            requestData = {
+                fundCode: fundData.code,
+                fundName: fundData.name || '',
+                costPrice: fundData.costPrise,
+                bonds: fundData.bonds,
+                app: fundData.app,
+                operationType: 'save' // 操作类型：保存
+            };
+        } else {
+            // 如果没有传入数据，尝试从当前表单获取
+            var code = $("#code").val();
+            var costPrise = $("#costPrise").val();
+            var bonds = $("#bonds").val();
+            var app = $("#app").val();
+            
+            if (code) {
+                requestData = {
+                    fundCode: code,
+                    costPrice: costPrise,
+                    bonds: bonds,
+                    app: app,
+                    operationType: 'save'
+                };
+            }
+        }
+        
+        console.log("传递给云函数的参数:", requestData);
+        
+        $.ajax({
+            url: "/api/fund/updateFundInfo",
+            type: "post",
+            data: JSON.stringify(requestData),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (data) {
+                if (data.code === "00000000") {
+                    console.log("updateFundInfo云函数调用成功:", data.value);
+                } else {
+                    console.error("updateFundInfo云函数调用失败:", data.msg);
+                }
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                console.error("调用updateFundInfo云函数出错:", textStatus, errorThrown);
+            }
+        });
+    }
+</script>
+</body>
+</html>

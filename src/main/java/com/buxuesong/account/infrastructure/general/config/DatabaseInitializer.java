@@ -38,9 +38,9 @@ public class DatabaseInitializer implements ApplicationRunner {
             if (resource.exists()) {
                 // 读取 SQL 脚本内容
                 String sqlScript = new BufferedReader(
-                        new InputStreamReader(resource.getInputStream()))
-                        .lines()
-                        .collect(Collectors.joining("\n"));
+                    new InputStreamReader(resource.getInputStream()))
+                    .lines()
+                    .collect(Collectors.joining("\n"));
 
                 // 执行 SQL 脚本
                 logger.info("执行数据库初始化脚本");

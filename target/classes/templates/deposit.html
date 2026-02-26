@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>收益汇总</title>
+    <link rel="stylesheet" th:href="@{/css/main.admin.css}" type="text/css" media="all"/>
+    <link rel="stylesheet" th:href="@{/css/main.amazeui.min.css}" type="text/css" media="all"/>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" type="text/css" media="all"/>
+    <script th:src="@{/js/deposit.js}"></script>
+    <script th:src="@{/js/stockLargeMarket.js}"></script>
+    <script th:src="@{/js/jquery.min.js}"></script>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/BigDecimal.js}"></script>
+    <!-- 日历控件 -->
+    <script th:src="@{/js/laydate.js}"></script>
+</head>
+<body onload="sidebar();getData();getLargeMarketData();">
+
+<header class="menu">
+    <div th:replace="header.html"></div>
+</header>
+
+<div class="am-cf admin-main">
+
+    <div th:replace="sidebar.html"></div>
+
+    <div class=" admin-content">
+        <div class="daohang"><div class="daohang-margin" id="stockLargeMarket"></div></div>
+        <div class="admin-biaogelist">
+            <div class="listbiaoti am-cf">
+                <ul class="am-icon-users"> 收益汇总
+                </ul>
+                <dl style="float: right;">
+                    <button type="button" onclick="getWeekDeposit()" class="am-btn am-btn-danger am-round am-btn-xs am-icon-search" > 筛选当周盈利</button>
+                    <button type="button" onclick="getMonthDeposit()" class="am-btn am-btn-danger am-round am-btn-xs am-icon-search" > 筛选当月盈利</button>
+                    <button type="button" onclick="getYearDeposit()" class="am-btn am-btn-danger am-round am-btn-xs am-icon-search" > 筛选当年盈利</button>
+                    <input type="text" class="demo-input" placeholder="请选择开始日期" id="beginDate">
+                    <input type="text" class="demo-input" placeholder="请选择结束日期" id="endDate">
+                    <button type="button" onclick="getData()" class="am-btn am-btn-danger am-round am-btn-xs am-icon-search" > 筛选</button>
+                </dl>
+                <dl class="am-icon-home" style="float: right;">
+                    当前位置： 首页 > <a href="#">收益汇总</a>
+                </dl>
+                <dl>
+                    <button type="button" onclick="deposit()" class="am-btn am-btn-danger am-round am-btn-xs am-icon-plus" > 统计当日盈利</button>
+                    <button type="button" onclick="deleteDeposit()" class="am-btn am-btn-danger am-round am-btn-xs am-icon-remove" > 删除当日盈利</button>
+                </dl>
+
+            </div>
+            <div class="am-btn-toolbars am-btn-toolbar am-kg am-cf"></div>
+            <form class="am-form am-g">
+                <input type="hidden" th:value="${userId}" id="userId"/>
+                <input type="hidden" th:value="${personName}" id="personName"/>
+                <input type="hidden" id="accountId"/>
+                <input type="hidden" id="typeId"/>
+                <table width="100%" class="am-table am-table-bordered am-table-radius am-table-striped">
+                    <thead>
+                    <tr class="am-success">
+                        <th class="table-author am-hide-sm-only">日期</th>
+                        <th class="table-title">基金盈利百分比</th>
+                        <th class="table-title">基金收益</th>
+                        <th class="table-title">基金市值</th>
+
+                        <th class="table-type">股票盈利百分比</th>
+                        <th class="table-type">股票收益</th>
+                        <th class="table-type">股票市值</th>
+
+                        <th class="table-author am-hide-sm-only">总盈利百分比</th>
+                        <th class="table-author am-hide-sm-only">总收益</th>
+                        <th class="table-author am-hide-sm-only">总市值</th>
+
+                        <th class="table-author am-hide-sm-only">上证涨跌幅</th>
+                        <th class="table-author am-hide-sm-only">上证指数</th>
+                    </tr>
+                    </thead>
+                    <tbody id="nr">
+                    </tbody>
+                </table>
+                <div id="page"></div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -19,7 +19,7 @@ public class ParamController {
      *
      * @return
      */
-    @GetMapping(value = "/api/param")
+    @GetMapping(value = "/param")
     public Response getParamList(@RequestParam(value = "type", required = false) String type)
         throws Exception {
         if (type == null) {
@@ -34,7 +34,7 @@ public class ParamController {
      *
      * @return
      */
-    @PostMapping(value = "/api/param")
+    @PostMapping(value = "/param")
     public Response saveParam(@RequestBody ParamRequest paramRequest) throws Exception {
         paramEntity.saveParam(paramRequest);
         return Response.builder().code("00000000").build();
@@ -45,7 +45,7 @@ public class ParamController {
      *
      * @return
      */
-    @DeleteMapping(value = "/api/param")
+    @DeleteMapping(value = "/param")
     public Response deleteParam(@RequestBody ParamRequest paramRequest) throws Exception {
         paramEntity.deleteParam(paramRequest);
         return Response.builder().code("00000000").build();

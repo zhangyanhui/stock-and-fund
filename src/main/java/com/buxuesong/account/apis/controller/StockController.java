@@ -25,7 +25,7 @@ public class StockController {
      *
      * @return
      */
-    @GetMapping(value = "/api/stock")
+    @GetMapping(value = "/stock")
     public Response getStockList(@RequestParam(value = "app", required = false) String app,
         @RequestParam(value = "code", required = false) String code) throws Exception {
         List<String> stockList = stockEntity.getStockList(app);
@@ -40,7 +40,7 @@ public class StockController {
      *
      * @return
      */
-    @GetMapping(value = "/api/stock/search")
+    @GetMapping(value = "/stock/search")
     public Response searchStockByName(@RequestParam(value = "name", required = false) String name) throws Exception {
         return Response.builder().code("00000000").value(stockEntity.searchStockByName(name)).build();
     }
@@ -51,7 +51,7 @@ public class StockController {
      * @return
      * @throws Exception
      */
-    @GetMapping(value = "/api/stockLargeMarket")
+    @GetMapping(value = "/stockLargeMarket")
     public Response getStockLargeMarketList() throws Exception {
         List<String> stockList = new ArrayList<>();
         stockList.add("sh000001,0,0,,0");
@@ -67,7 +67,7 @@ public class StockController {
      * @return
      * @throws Exception
      */
-    @GetMapping(value = "/api/stockHis")
+    @GetMapping(value = "/stockHis")
     public Response getStockHisList(@RequestParam(value = "app", required = false) String app,
         @RequestParam(value = "code", required = false) String code,
         @RequestParam(value = "beginDate", required = false) String beginDate,
@@ -81,7 +81,7 @@ public class StockController {
      *
      * @return
      */
-    @GetMapping(value = "/api/buyOrSellStock")
+    @GetMapping(value = "/buyOrSellStock")
     public Response buyOrSellStock(@RequestParam(value = "code", required = false) String code,
         @RequestParam(value = "beginDate", required = false) String beginDate,
         @RequestParam(value = "endDate", required = false) String endDate) throws Exception {
@@ -95,7 +95,7 @@ public class StockController {
      *
      * @return
      */
-    @PostMapping(value = "/api/saveStock")
+    @PostMapping(value = "/saveStock")
     public Response saveStock(@RequestBody StockRequest stockRequest) throws Exception {
         log.info("Save stock request: {}", stockRequest);
         if (stockEntity.saveStock(stockRequest)) {
@@ -109,7 +109,7 @@ public class StockController {
      *
      * @return
      */
-    @PostMapping(value = "/api/deleteStock")
+    @PostMapping(value = "/deleteStock")
     public Response deleteStock(@RequestBody StockRequest stockRequest) throws Exception {
         log.info("Delete stock request: {}", stockRequest);
         stockEntity.deleteStock(stockRequest);
@@ -121,7 +121,7 @@ public class StockController {
      *
      * @return
      */
-    @PostMapping(value = "/api/buyOrSellStock")
+    @PostMapping(value = "/buyOrSellStock")
     public Response buyOrSellStock(@RequestBody BuyOrSellStockRequest buyOrSellStockRequest) throws Exception {
         log.info("Buy or sell stock request: {}", buyOrSellStockRequest);
         stockEntity.buyOrSellStock(buyOrSellStockRequest);
@@ -133,7 +133,7 @@ public class StockController {
      *
      * @return
      */
-    @GetMapping(value = "/api/stock/compute")
+    @GetMapping(value = "/stock/compute")
     public Response computeStock(@RequestParam(value = "code", required = false) String code,
         @RequestParam(value = "dataLen", required = false) String dataLen) throws Exception {
         return Response.builder().code("00000000").value(stockEntity.computeStock(code, dataLen)).build();

@@ -18,7 +18,7 @@ public class DepositController {
      *
      * @return
      */
-    @GetMapping(value = "/api/deposit")
+    @GetMapping(value = "/deposit")
     public Response getDepositList(@RequestParam(value = "beginDate", required = false) String beginDate,
         @RequestParam(value = "endDate", required = false) String endDate) throws Exception {
         return Response.builder().code("00000000").value(depositEntity.getDepositList(beginDate, endDate)).build();
@@ -29,13 +29,13 @@ public class DepositController {
      *
      * @return
      */
-    @PostMapping(value = "/api/deposit")
+    @PostMapping(value = "/deposit")
     public Response depositToday() throws Exception {
         depositEntity.deposit();
         return Response.builder().code("00000000").build();
     }
 
-    @GetMapping(value = "/api/depositAllUsers")
+    @GetMapping(value = "/depositAllUsers")
     public Response depositAllUsers() throws Exception {
         depositEntity.depositAllUsers();
         return Response.builder().code("00000000").build();
@@ -46,19 +46,19 @@ public class DepositController {
      *
      * @return
      */
-    @DeleteMapping(value = "/api/deposit")
+    @DeleteMapping(value = "/deposit")
     public Response deleteDeposit() throws Exception {
         depositEntity.deleteDeposit();
         return Response.builder().code("00000000").build();
     }
 
-    @GetMapping(value = "/api/deposit/year")
+    @GetMapping(value = "/deposit/year")
     public Response getDepositYearSummitList(@RequestParam(value = "beginDate", required = false) String beginDate,
         @RequestParam(value = "endDate", required = false) String endDate) throws Exception {
         return Response.builder().code("00000000").value(depositEntity.getDepositYearSummitList(beginDate, endDate)).build();
     }
 
-    @GetMapping(value = "/api/deposit/month")
+    @GetMapping(value = "/deposit/month")
     public Response getDepositMonthSummitList(@RequestParam(value = "beginDate", required = false) String beginDate,
         @RequestParam(value = "endDate", required = false) String endDate) throws Exception {
         return Response.builder().code("00000000").value(depositEntity.getDepositMonthSummitList(beginDate, endDate)).build();

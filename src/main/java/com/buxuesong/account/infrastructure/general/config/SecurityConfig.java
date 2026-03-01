@@ -1,25 +1,20 @@
 package com.buxuesong.account.infrastructure.general.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
-import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import javax.sql.DataSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -33,36 +28,27 @@ public class SecurityConfig implements WebMvcConfigurer {
 
     @Value("${my.image.path}")
     private String myImagePath;
-    DataSource dataSource;
 
-    public SecurityConfig(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
+    // 不再注入DataSource，因为我们不再使用数据库进行身份验证
 
     private final static String ACCOUNT_CLIENT_AUTHORITY = "ADMIN";
 
-    // 配置basicauth账号密码
+    // 配置内存中的用户账号密码（不使用数据库）
     @Bean
     UserDetailsService userDetailsService() {
-//        InMemoryUserDetailsManager users = new InMemoryUserDetailsManager();
-//        users.createUser(User.withUsername("aaa")
-//                .password(PasswordEncoderFactories.createDelegatingPasswordEncoder().encode("bbb"))
-//                .authorities(ACCOUNT_CLIENT_AUTHORITY).build());
-        JdbcUserDetailsManager manager = new JdbcUserDetailsManager(dataSource);
-        // 配置使用小写表名
-        manager.setUsersByUsernameQuery("select username,password,enabled from users where username = ?");
-        manager.setAuthoritiesByUsernameQuery("select username,authority from authorities where username = ?");
-        manager.setCreateUserSql("insert into users (username, password, enabled) values (?, ?, ?)");
-        manager.setCreateAuthoritySql("insert into authorities (username, authority) values (?, ?)");
-        manager.setDeleteUserSql("delete from users where username = ?");
-        manager.setChangePasswordSql("update users set password = ? where username = ?");
-        manager.setUserExistsSql("select username from users where username = ?");
+        PasswordEncoder encoder = passwordEncoder();
+        User.UserBuilder users = User.builder()
+            .passwordEncoder(encoder::encode);
+        org.springframework.security.provisioning.InMemoryUserDetailsManager manager = new org.springframework.security.provisioning.InMemoryUserDetailsManager();
+        manager.createUser(users.username("admin")
+            .password("admin123")
+            .authorities(ACCOUNT_CLIENT_AUTHORITY).build());
         return manager;
     }
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        return new BCryptPasswordEncoder();
     }
 
     @Bean

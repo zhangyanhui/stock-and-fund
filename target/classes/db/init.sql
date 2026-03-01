@@ -103,25 +103,4 @@ CREATE TABLE IF NOT EXISTS OPEN_PERSISTENT_MONTH (
   DATA TEXT(512) NOT NULL
 );
 
--- 登录用户数据
-CREATE TABLE IF NOT EXISTS USERS (
-  username varchar(50) NOT NULL,
-  password varchar(100) NOT NULL,
-  enabled tinyint(1) NOT NULL,
-  PRIMARY KEY (username)
-);
-
--- 登录用户权限数据
-CREATE TABLE IF NOT EXISTS AUTHORITIES (
-  username varchar(64) NOT NULL,
-  authority varchar(64) NOT NULL,
-  CONSTRAINT fk_authorities_users FOREIGN KEY (username) REFERENCES USERS (username)
-);
-
--- 插入默认用户
-INSERT OR IGNORE INTO USERS (username, password, enabled) VALUES
-  ('admin', '{bcrypt}$2a$10$ImeqoAbgCx3HdADX9Or08eTBqAM6SMnEEn8K/6a0bsZiGg.VzYxBu', 1);
-
--- 插入默认权限
-INSERT OR IGNORE INTO AUTHORITIES (username, authority) VALUES
-  ('admin', 'ADMIN');
+-- 注意：已经移除 users 和 authorities 表的创建，因为现在使用内存用户验证

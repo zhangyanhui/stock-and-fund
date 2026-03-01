@@ -74,7 +74,74 @@ mvn spring-boot:run
 - Pay attention to timezone handling (China timezone GMT+08 is configured)
 
 ### Security Configuration
-- Keycloak is used for OAuth2 authentication (default)
-- Alternative local user authentication available via SecurityConfig class toggle
-- Passwords are BCrypt hashed
+- Memory-based authentication is now used instead of database-based authentication
+- Default admin user with username "admin" and password "admin123"
+- Keycloak integration still available via SecurityConfigKeyCloak class
+- Passwords are no longer BCrypt hashed (for memory users)
 - Static resources are configured to bypass security filters
+
+## Environment Variables & Configuration
+
+### Environment Setup
+To improve security, sensitive configurations are stored in environment variables:
+
+1. Copy `.env.example` to `.env` and fill in actual values:
+```bash
+cp .env.example .env
+```
+
+2. Required environment variables:
+   - `TENCENT_CLOUD_ENV_ID`: Tencent Cloud environment ID
+   - `TENCENT_CLOUD_TOKEN`: Tencent Cloud access token
+   - `TENCENT_CLOUD_FUND_FUNCTION_NAME`: Fund function name (default: getAllUserFunds)
+
+### Running with Environment Variables
+```bash
+# Set environment variables manually
+export TENCENT_CLOUD_ENV_ID=your_actual_env_id
+export TENCENT_CLOUD_TOKEN=your_actual_token
+export TENCENT_CLOUD_FUND_FUNCTION_NAME=getAllUserFunds
+
+# Then run the application
+mvn spring-boot:run
+```
+
+### Application Properties
+- Main configuration file: `src/main/resources/application.properties`
+- Database connection: SQLite with configurable path via `spring.datasource.url`
+- Cache configuration with simple cache type
+- Logging levels configured for different modules
+- Email settings with placeholders for SMTP configuration
+
+## Deployment Options
+
+### Local Docker Deployment
+1. Package the application with Maven
+2. Run `./localDeployment.sh` script
+3. Access the application at http://localhost:8080
+
+### Direct JAR Execution
+Download release JAR and run with:
+```bash
+java -jar -Dsqllite.db.file=/path/to/stock-and-fund.db stock-and-fund-x.x.x.jar
+```
+
+### IDE Development
+Configure environment variable `sqllite.db.file` pointing to the SQLite database file path in your IDE's run configuration.
+
+## Database Schema
+The application uses SQLite with the following main tables:
+- `DEPOSIT`: Profit/loss summary data
+- `FUND` and `FUND_HIS`: Fund data and history
+- `STOCK` and `STOCK_HIS`: Stock data and history
+- `BUY_OR_SELL`: Transaction records
+- `PARAM`: Dictionary data
+- `users` and `authorities`: Authentication tables
+- `OPEN_PERSISTENT_MONTH`: Trading day data
+
+## User Management
+Two authentication methods are supported:
+1. **Keycloak SSO**: Default method using OAuth2
+2. **Local authentication**: Enable by commenting/uncommenting configuration classes
+   - Generate passwords using `PasswordUtils.java`
+   - Insert users into `users` and `authorities` tables with BCrypt hashes

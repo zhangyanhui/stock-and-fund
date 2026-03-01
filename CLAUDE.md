@@ -115,6 +115,17 @@ mvn spring-boot:run
 
 ## Deployment Options
 
+### Railway Deployment
+For Railway deployment, the application uses a multi-stage Docker build:
+1. First stage uses Maven to build the application
+2. Second stage copies the JAR to a runtime image
+3. Make sure to set the following environment variables in Railway:
+   - `sqllite.db.file`: Path to the SQLite database file
+   - `TENCENT_CLOUD_ENV_ID`: Tencent Cloud environment ID
+   - `TENCENT_CLOUD_TOKEN`: Tencent Cloud access token
+   - `TENCENT_CLOUD_FUND_FUNCTION_NAME`: Fund function name
+   - `my-image-path`: Path for image resources (if needed)
+
 ### Local Docker Deployment
 1. Package the application with Maven
 2. Run `./localDeployment.sh` script

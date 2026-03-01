@@ -1,5 +1,5 @@
 function getLargeMarketData() {
-    var url = "/stockLargeMarket";
+    var url = "/api/stockLargeMarket";
     $.ajax({
         url: url,
         type: "get",

@@ -18,7 +18,7 @@ function getData() {
     var personName = $("#personName").val();
     var accountId = $("#accountId").val();
     $.ajax({
-        url:"/param?type=APP",
+        url:"/api/param?type=APP",
         type:"get",
         data :{},
         dataType:'json',
@@ -38,9 +38,9 @@ function getData() {
     setInterval('autoRefresh()', 30000);
 }
 
-function initData(){
+function initData() {
     $.ajax({
-        url:"/stock",
+        url:"/api/stock",
         type:"get",
         data :{
         },
@@ -60,7 +60,7 @@ function initData(){
 
 function initFund() {
     $.ajax({
-        url:"/fund",
+        url:"/api/fund",
         type:"get",
         data :{
         },

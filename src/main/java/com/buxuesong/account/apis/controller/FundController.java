@@ -46,7 +46,7 @@ public class FundController {
      *
      * @return
      */
-    @GetMapping(value = "/fund")
+    @GetMapping(value = "/api/fund")
     public Response getFundList(@RequestParam(value = "app", required = false) String app,
         @RequestParam(value = "code", required = false) String code) throws Exception {
         List<String> fundList = fundEntity.getFundList(app);
@@ -56,7 +56,7 @@ public class FundController {
         return Response.builder().code("00000000").value(fundEntity.getFundDetails(fundList)).build();
     }
 
-    @GetMapping(value = "/fundHis")
+    @GetMapping(value = "/api/fundHis")
     public Response getFundHisList(@RequestParam(value = "app", required = false) String app,
         @RequestParam(value = "code", required = false) String code,
         @RequestParam(value = "beginDate", required = false) String beginDate,
@@ -65,7 +65,7 @@ public class FundController {
         return Response.builder().code("00000000").value(fundHisList).build();
     }
 
-    @GetMapping(value = "/fund/search")
+    @GetMapping(value = "/api/fund/search")
     public Response searchFundByName(@RequestParam(value = "name", required = false) String name) throws Exception {
         return Response.builder().code("00000000").value(fundEntity.searchFundByName(name)).build();
     }
@@ -75,7 +75,7 @@ public class FundController {
      *
      * @return
      */
-    @PostMapping(value = "/saveFund")
+    @PostMapping(value = "/api/saveFund")
     public Response saveFund(@RequestBody FundRequest fundRequest) throws Exception {
         log.info("Save fund request: {}", fundRequest);
         if (fundEntity.saveFund(fundRequest)) {
@@ -96,7 +96,7 @@ public class FundController {
      *
      * @return
      */
-    @PostMapping(value = "/deleteFund")
+    @PostMapping(value = "/api/deleteFund")
     public Response deleteFund(@RequestBody FundRequest fundRequest) throws Exception {
         log.info("Delete fund request: {}", fundRequest);
         fundEntity.deleteFund(fundRequest);
@@ -108,7 +108,7 @@ public class FundController {
      *
      * @return
      */
-    @GetMapping(value = "/stockAndFund")
+    @GetMapping(value = "/api/stockAndFund")
     public Response getStockAndFundList(@RequestParam(value = "app", required = false) String app)
         throws Exception {
         List<String> fundListFrom = fundEntity.getFundList(app);

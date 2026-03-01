@@ -13,12 +13,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import javax.sql.DataSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -29,11 +28,12 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Order(1)
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig implements WebMvcConfigurer {
+public class SecurityConfig {
 
-    @Value("${my.image.path}")
-    private String myImagePath;
     DataSource dataSource;
+
+    @Autowired
+    private SimpleTokenFilter simpleTokenFilter;
 
     public SecurityConfig(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -41,23 +41,14 @@ public class SecurityConfig implements WebMvcConfigurer {
 
     private final static String ACCOUNT_CLIENT_AUTHORITY = "ADMIN";
 
-    // 配置basicauth账号密码
+    // 配置内存用户存储
     @Bean
     UserDetailsService userDetailsService() {
-//        InMemoryUserDetailsManager users = new InMemoryUserDetailsManager();
-//        users.createUser(User.withUsername("aaa")
-//                .password(PasswordEncoderFactories.createDelegatingPasswordEncoder().encode("bbb"))
-//                .authorities(ACCOUNT_CLIENT_AUTHORITY).build());
-        JdbcUserDetailsManager manager = new JdbcUserDetailsManager(dataSource);
-        // 配置使用小写表名
-        manager.setUsersByUsernameQuery("select username,password,enabled from users where username = ?");
-        manager.setAuthoritiesByUsernameQuery("select username,authority from authorities where username = ?");
-        manager.setCreateUserSql("insert into users (username, password, enabled) values (?, ?, ?)");
-        manager.setCreateAuthoritySql("insert into authorities (username, authority) values (?, ?)");
-        manager.setDeleteUserSql("delete from users where username = ?");
-        manager.setChangePasswordSql("update users set password = ? where username = ?");
-        manager.setUserExistsSql("select username from users where username = ?");
-        return manager;
+        InMemoryUserDetailsManager users = new InMemoryUserDetailsManager();
+        users.createUser(org.springframework.security.core.userdetails.User.withUsername("admin")
+            .password("{noop}admin123") // {noop}表示不加密，直接使用明文密码
+            .authorities(ACCOUNT_CLIENT_AUTHORITY).build());
+        return users;
     }
 
     @Bean
@@ -79,26 +70,19 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-            // 下面配置对/helloWorld1接口需要验证 ADMIN 的 authoritie
-            // 和 Controller 中的 @PreAuthorize("hasAuthority('ADMIN')")注解配置效果一样
-            // 这两种方式用哪一种都可以
+            // 添加Token过滤器
+            .addFilterBefore(simpleTokenFilter, UsernamePasswordAuthenticationFilter.class)
+            // 配置访问权限
             .authorizeHttpRequests((authorize) -> authorize
-                .requestMatchers("/login", "/chrome/**", "/login.html", "/test/**", "/api/test/**", "/fund/updateFundInfo",
-                    "/fund/api/list")
+                .requestMatchers("/login", "/login.html")
                 .permitAll()
                 .anyRequest().hasAuthority(ACCOUNT_CLIENT_AUTHORITY))
-            .formLogin((formLogin) -> formLogin.loginPage("/login.html").loginProcessingUrl("/login").defaultSuccessUrl("/main.html", true))
+            // 配置表单登录
+            .formLogin((formLogin) -> formLogin.loginPage("/login.html").loginProcessingUrl("/login")
+                .defaultSuccessUrl("/stockAndFund", true))
             .logout(withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
-            .requestCache(withDefaults())
-            .headers(headers -> headers.cacheControl(withDefaults()))
             .build();
     }
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 增加映射静态资源
-        registry.addResourceHandler("/my-image/**")
-            .addResourceLocations(myImagePath);
-    }
 }

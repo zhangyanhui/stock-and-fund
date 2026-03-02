@@ -103,4 +103,4 @@ CREATE TABLE IF NOT EXISTS OPEN_PERSISTENT_MONTH (
   DATA TEXT(512) NOT NULL
 );
 
--- 注意：已经移除 users 和 authorities 表的创建，因为现在使用内存用户验证
+-- 注意：已经移除 users 和 authorities 表的创建

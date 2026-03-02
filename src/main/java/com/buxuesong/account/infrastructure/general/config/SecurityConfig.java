@@ -3,7 +3,6 @@ package com.buxuesong.account.infrastructure.general.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -16,8 +15,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 /**
- * 完全基于内存用户的Security配置文件 不依赖任何数据库
+ * 安全配置 - 不依赖数据库users表
  */
 @Order(1)
 @Configuration
@@ -27,7 +28,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     private final static String ACCOUNT_CLIENT_AUTHORITY = "ADMIN";
 
     /**
-     * 配置内存中的用户账号密码（完全不使用数据库）
+     * 配置内存中的用户账号密码（不使用数据库users表）
      */
     @Bean
     public UserDetailsService userDetailsService() {
@@ -35,14 +36,14 @@ public class SecurityConfig implements WebMvcConfigurer {
 
         InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
 
-        // 创建管理员用户
+        // 创建预设用户，使用BCrypt编码的密码
         User.UserBuilder userBuilder = User.builder()
             .passwordEncoder(encoder::encode);
 
         manager.createUser(userBuilder
             .username("admin")
             .password("admin123")
-            .roles("ADMIN") // 使用角色方式，更简单
+            .authorities(ACCOUNT_CLIENT_AUTHORITY)
             .build());
 
         return manager;
@@ -63,33 +64,30 @@ public class SecurityConfig implements WebMvcConfigurer {
         return http.build();
     }
 
-    /**
-     * 配置不同接口访问权限
-     */
+    // 配置不同接口访问权限
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/login", "/chrome/**", "/login.html", "/test/**", "/api/test/**", "/fund/updateFundInfo",
-                    "/fund/api/list", "/favicon.ico")
+                    "/fund/api/list")
                 .permitAll()
-                .anyRequest().hasRole("ADMIN"))
+                .anyRequest().hasAuthority(ACCOUNT_CLIENT_AUTHORITY))
             .formLogin(formLogin -> formLogin
                 .loginPage("/login.html")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/main.html", true)
-                .permitAll())
-            .logout(logout -> logout.permitAll())
+                .defaultSuccessUrl("/main.html", true))
+            .logout(withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
-            .requestCache(Customizer.withDefaults())
-            .headers(headers -> headers.cacheControl(Customizer.withDefaults()))
+            .requestCache(withDefaults())
+            .headers(headers -> headers.cacheControl(withDefaults()))
             .build();
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 静态资源处理
+        // 增加映射静态资源
         registry.addResourceHandler("/my-image/**")
-            .addResourceLocations("file:./", "file:../", "file:/app/");
+            .addResourceLocations("file:${my.image.path:./}");
     }
 }
